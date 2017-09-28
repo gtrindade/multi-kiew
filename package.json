@@ -9,6 +9,7 @@
   "author": "ggoncalves",
   "license": "MIT",
   "dependencies": {
-    "request": "^2.83.0"
+    "request": "^2.83.0",
+    "slimbot": "^0.7.4"
   }
 }
