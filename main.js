@@ -13,13 +13,10 @@ var MINE_HOST = `73.15.19.24`
 var MINE_PORT = 25565
 var TIMEOUT = 3000
 
-var client = new net.Socket()
-client.setTimeout(TIMEOUT)
-
 // Register listeners
 slimbot.on(`message`, (message) => {
   var {text} = message
-  var msgPrefix, errorHandler
+  var msgPrefix, errorHandler, client
   if (text) {
     if (text.startsWith(ROLL)) {
       var expression = text.substring(ROLL.length, text.length).trim()
@@ -38,13 +35,16 @@ slimbot.on(`message`, (message) => {
       case `mine`:
       case `minecraft`:
         msgPrefix = SERVER_STATUS.substring(1, SERVER_STATUS.length) + ` => ` + target
+        client = new net.Socket()
+        client.setTimeout(TIMEOUT)
+
         client.connect(MINE_PORT, MINE_HOST, () => {
           slimbot.sendMessage(message.chat.id, msgPrefix + `:\n\nEstá ligado! =D`)
-          client.end()
+          client.destroy()
         })
         errorHandler = () => {
           slimbot.sendMessage(message.chat.id, msgPrefix + `:\n\nEstá desligado... =(`)
-          client.end()
+          client.destroy()
         }
         client.on(`timeout`, errorHandler)
         client.on(`error`, errorHandler)
