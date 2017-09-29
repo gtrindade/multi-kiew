@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "request": "^2.83.0",
+    "roll": "^1.2.0",
     "slimbot": "^0.7.4"
   }
 }
