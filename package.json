@@ -2,9 +2,10 @@
   "name": "multi-kiew",
   "version": "1.0.0",
   "description": "Telegram bot",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "node main.js"
+    "build": "node_modules/typescript/bin/tsc",
+    "start": "npm run build && node dist/main.js"
   },
   "author": "ggoncalves",
   "license": "MIT",
@@ -12,5 +13,10 @@
     "request": "^2.83.0",
     "roll": "^1.2.0",
     "slimbot": "^0.7.4"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.47",
+    "typescript": "^2.5.3",
+    "tslint": "^5.8.0"
   }
 }
