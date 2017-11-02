@@ -1,6 +1,7 @@
 import * as Slimbot from 'slimbot'
-import net from 'net'
 import * as Roll from 'roll'
+// import * as fs from 'fs'
+import * as net from 'net'
 
 const roll = new Roll()
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`])
