@@ -1,13 +1,17 @@
 import * as Slimbot from 'slimbot'
 import * as Roll from 'roll'
 import * as net from 'net'
+import uscis from './uscis'
 
 const roll = new Roll()
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`])
 
+// Commands
 const ROLL = `/roll`
 const SERVER_STATUS = `/status`
 const POLEMICA = `/criar_polemica`
+const USCIS = `/uscis`
+
 const ASSUNTOS = [`A terra é redonda!`, `PC > VG`, `Star Wars I, II, III é bom`, `Linux > Windows`, `Fone de Ouvido > Caixinha de som`, `Meia soquete é top`, `Esposa > Amigos`, `Dwarf Fortress > God of War`, `PT > PSDB`, `Deus > Buda`, `Batman 3 é bom`, `Jessica Jones > Luke Cage`, `Android > iOS`]
 
 const MINE_HOST = `73.15.19.24`
@@ -16,14 +20,25 @@ const TIMEOUT = 3000
 const aishoUrl = `https://imgur.com/oMTaDat`
 
 // Register listeners
-slimbot.on(`message`, (message: any) => {
+slimbot.on(`message`, async (message: any) => {
   const {text, chat} = message
+  console.log(`chat.id`, chat.id)
   if (text) {
     if (text.indexOf(`(AF)`) >= 0) {
       slimbot.sendPhoto(chat.id, aishoUrl)
         .catch(console.log)
     }
-    if (text.startsWith(ROLL)) {
+    if (text.startsWith(USCIS)) {
+      var name = text.substring(USCIS.length, text.length).trim()
+      const request = uscis[name]
+      if (request) {
+        const response = await request()
+        slimbot.sendMessage(chat.id, response)
+      } else {
+        slimbot.sendMessage(chat.id, `User not found`)
+      }
+    }
+    else if (text.startsWith(ROLL)) {
       var expression = text.substring(ROLL.length, text.length).trim()
       const [rollExpression] = expression.split(` `)
 
