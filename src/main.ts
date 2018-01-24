@@ -81,7 +81,27 @@ slimbot.on(`message`, async (message: any) => {
   }
 })
 
-// Call API
+const archeryChat = -1001057198275
+const currentDates: { [index:string]: string } = {}
+const uscisNames = Object.keys(uscis)
+uscisNames.map(async (name: string) => {
+  currentDates[name] = await uscis[name]()
+})
 
+setInterval(async () => {
+  console.log(`previous dates`, currentDates)
+  await uscisNames.map(async (name: string) => {
+    const result = await uscis[name]()
+    if (currentDates[name] !== result) {
+      console.log(`name updated`, name, `with value`, result)
+      currentDates[name] = result
+      slimbot.sendMessage(archeryChat, `USCIS date updated for ${name}!`)
+    } else {
+      console.log(`name not updated`)
+    }
+  })
+}, 4 * 60 * 60 * 1000)
+
+// Call API
 console.log(`listening...`)
 slimbot.startPolling()
