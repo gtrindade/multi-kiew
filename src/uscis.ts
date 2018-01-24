@@ -1,7 +1,9 @@
 import * as puppeteer from 'puppeteer'
 
+const pupOptions = { args: ['--no-sandbox', '--disable-setuid-sandbox'] }
+
 const trindade = async (): Promise<string> => {
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch(pupOptions)
   const page = await browser.newPage()
   await page.goto('http://egov.uscis.gov/cris/processTimesDisplayInit.do')
   await page.select('#serviceCenter', '992') // Nebraska Service Center
@@ -29,7 +31,7 @@ const trindade = async (): Promise<string> => {
 }
 
 const tiago = async (): Promise<string> => {
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch(pupOptions)
   const page = await browser.newPage()
   await page.goto('http://egov.uscis.gov/cris/processTimesDisplayInit.do')
   await page.select('#serviceCenter', '992') // Nebraska Service Center
