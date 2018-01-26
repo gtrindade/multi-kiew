@@ -97,7 +97,7 @@ setInterval(async () => {
       currentDates[name] = result
       slimbot.sendMessage(archeryChat, `USCIS date updated for ${name}!`)
     } else {
-      console.log(`name not updated`)
+      console.log(`${name} not updated`)
     }
   })
 }, 4 * 60 * 60 * 1000)
