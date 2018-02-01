@@ -2,6 +2,7 @@ import * as Slimbot from 'slimbot'
 import * as Roll from 'roll'
 import * as net from 'net'
 import uscis from './uscis'
+import ups from './ups'
 
 const roll = new Roll()
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`])
@@ -101,6 +102,25 @@ setInterval(async () => {
     }
   })
 }, 4 * 60 * 60 * 1000)
+
+
+const viadosChat = -1001229010263 
+const currentTracking: { [index:string]: string } = {}
+const trackingNumbers = [`1ZA0T8680236961553`]
+trackingNumbers.map(async (num: string) => {
+  currentTracking[num] = await ups(num)
+})
+setInterval(async () => {
+  await trackingNumbers.map(async (num: string) => {
+    const result = await ups(num)
+    if (currentTracking[num] !== result) {
+      console.log(`num updated`, num, `with value`, result)
+      currentTracking[num] = result
+      slimbot.sendMessage(viadosChat, `UPS updated!\n${result}`)
+    }
+  })
+}, 30 * 60 * 1000)
+
 
 // Call API
 console.log(`listening...`)
