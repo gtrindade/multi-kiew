@@ -119,7 +119,7 @@ setInterval(async () => {
       slimbot.sendMessage(viadosChat, `UPS updated!\n${result}`)
     }
   })
-}, 30 * 60 * 1000)
+}, 10 * 60 * 1000)
 
 
 // Call API
