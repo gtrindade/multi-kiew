@@ -18,7 +18,9 @@ const ASSUNTOS = [`A terra é redonda!`, `PC > VG`, `Star Wars I, II, III é bom
 const MINE_HOST = `73.15.19.24`
 const MINE_PORT = 25565
 const TIMEOUT = 3000
-const aishoUrl = `https://imgur.com/oMTaDat`
+
+// const aishoUrl = `https://imgur.com/oMTaDat`
+const aishoUrl = `https://imgur.com/a/Wlnj0`
 
 // Register listeners
 slimbot.on(`message`, async (message: any) => {
