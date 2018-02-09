@@ -20,7 +20,8 @@ const MINE_PORT = 25565
 const TIMEOUT = 3000
 
 // const aishoUrl = `https://imgur.com/oMTaDat`
-const aishoUrl = `https://imgur.com/a/QgQOg`
+// const aishoUrl = `https://imgur.com/a/QgQOg`
+const aishoUrl = `https://imgur.com/a/kg2TW`
 
 // Register listeners
 slimbot.on(`message`, async (message: any) => {
