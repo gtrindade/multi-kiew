@@ -2,7 +2,8 @@ import * as Slimbot from 'slimbot'
 import * as Roll from 'roll'
 import * as net from 'net'
 import uscis from './uscis'
-// import ups from './ups'
+import {Repeaters, Repeatable} from './repeater'
+import ups from './ups'
 
 const roll = new Roll()
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`])
@@ -12,6 +13,7 @@ const ROLL = `/roll`
 const SERVER_STATUS = `/status`
 const POLEMICA = `/criar_polemica`
 const USCIS = `/uscis`
+const UPS = `/ups`
 
 const ASSUNTOS = [`A terra é redonda!`, `PC > VG`, `Star Wars I, II, III é bom`, `Linux > Windows`, `Fone de Ouvido > Caixinha de som`, `Meia soquete é top`, `Esposa > Amigos`, `Dwarf Fortress > God of War`, `PT > PSDB`, `Deus > Buda`, `Batman 3 é bom`, `Jessica Jones > Luke Cage`, `Android > iOS`]
 
@@ -19,9 +21,9 @@ const MINE_HOST = `73.15.19.24`
 const MINE_PORT = 25565
 const TIMEOUT = 3000
 
-// const aishoUrl = `https://imgur.com/oMTaDat`
-// const aishoUrl = `https://imgur.com/a/QgQOg`
 const aishoUrl = `https://imgur.com/a/kg2TW`
+
+const repeaters = new Repeaters()
 
 // Register listeners
 slimbot.on(`message`, async (message: any) => {
@@ -79,6 +81,38 @@ slimbot.on(`message`, async (message: any) => {
         slimbot.sendMessage(chat.id, SERVER_STATUS.substring(1, SERVER_STATUS.length) + ` => ` + target + `:\n\nIsso non ecziste!`)
         break
       }
+    } else if (text.startsWith(UPS)) {
+      var directives = text.substring(UPS.length, text.length).trim().split(` `)
+      const [command, tracking, interval] = directives
+      if (command == `add`) {
+        if (!interval || interval < 1) {
+          slimbot.sendMessage(chat.id, `Invalid command`)
+        } else {
+          repeaters.remove(tracking)
+          const initialValue = await repeaters.add({
+            name: tracking,
+            interval,
+            chatId: chat.id,
+            kind: `ups`,
+            success: (result: any) => slimbot.sendMessage(chat.id, `UPS updated!\n${result}`),
+            failure: () => console.log(`Nothing changed on tracking ${tracking}`),
+            func: () => ups(tracking),
+          })
+          slimbot.sendMessage(chat.id, `Tracking added for every ${interval} minute(s)\nInitial Result:\n${initialValue}`)
+        }
+      } else if (command == `remove`) {
+        repeaters.remove(tracking)
+        slimbot.sendMessage(chat.id, `Successfully removed ${tracking}`) 
+      } else if (command == `list`) {
+        const trackingNumbers = repeaters.getByKind(`ups`).map((tracker) => `${tracker.name} - every ${tracker.interval} minute(s)`).join(`\n`)
+        if (trackingNumbers !== ``) {
+          slimbot.sendMessage(chat.id, `Currently Tracking:\n${trackingNumbers}`) 
+        } else {
+          slimbot.sendMessage(chat.id, `Not tracking anything right now`) 
+        }
+      } else {
+        slimbot.sendMessage(chat.id, `Invalid command.`)
+      }
     } else if (text.startsWith(POLEMICA)) {
       slimbot.sendMessage(chat.id, `Blz, lá vai:\n\n` + ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)])
     }
@@ -86,44 +120,19 @@ slimbot.on(`message`, async (message: any) => {
 })
 
 const archeryChat = -1001057198275
-const currentDates: { [index:string]: string } = {}
 const uscisNames = Object.keys(uscis)
 uscisNames.map(async (name: string) => {
-  currentDates[name] = await uscis[name]()
-})
-
-setInterval(async () => {
-  console.log(`previous dates`, currentDates)
-  await uscisNames.map(async (name: string) => {
-    const result = await uscis[name]()
-    if (currentDates[name] !== result) {
-      console.log(`name updated`, name, `with value`, result)
-      currentDates[name] = result
-      slimbot.sendMessage(archeryChat, `USCIS date updated for ${name}!`)
-    } else {
-      console.log(`${name} not updated`)
-    }
+  const added = await repeaters.add({
+    name,
+    kind: `uscis`,
+    chatId: archeryChat,
+    func: uscis[name],
+    success: () => slimbot.sendMessage(archeryChat, `USCIS date updated for ${name}!`),
+    failure: () => console.log(`nothing uptated`),
+    interval: 1
   })
-}, 4 * 60 * 60 * 1000)
-
-
-// const viadosChat = -1001229010263 
-// const currentTracking: { [index:string]: string } = {}
-// const trackingNumbers = [`1ZA0T8680236961553`]
-// trackingNumbers.map(async (num: string) => {
-  // currentTracking[num] = await ups(num)
-// })
-// setInterval(async () => {
-  // await trackingNumbers.map(async (num: string) => {
-    // const result = await ups(num)
-    // if (currentTracking[num] !== result) {
-      // console.log(`num updated`, num, `with value`, result)
-      // currentTracking[num] = result
-      // slimbot.sendMessage(viadosChat, `UPS updated!\n${result}`)
-    // }
-  // })
-// }, 10 * 60 * 1000)
-
+  console.log(`started tracking uscis for ${name} with initial result:\n${added}`)
+})
 
 // Call API
 console.log(`listening...`)
