@@ -28,6 +28,7 @@ const ASSUNTOS = [
 const TIMEOUT = 3000
 
 const aishoUrl = `https://imgur.com/a/kg2TW`
+const shiryuUrl = `https://imgur.com/a/GjYYHKB`
 
 function rollDice(command, message) {
   const {text, chat} = message
@@ -66,6 +67,10 @@ slimbot.on(`message`, async (message) => {
   if (text) {
     if (text.indexOf(`(AF)`) >= 0) {
       slimbot.sendPhoto(chat.id, aishoUrl)
+        .catch(console.log)
+    }
+    if (text.indexOf(`(SF)`) >= 0) {
+      slimbot.sendPhoto(chat.id, shiryuUrl)
         .catch(console.log)
     }
     else if (text.startsWith(ROLL)) {
