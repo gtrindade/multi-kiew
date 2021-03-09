@@ -22,7 +22,9 @@ const ASSUNTOS = [
   `Deus > Buda`,
   `Batman 3 é bom`,
   `Jessica Jones > Luke Cage`,
-  `Android > iOS`
+  `Android > iOS`,
+  `3.5 > 5.0`,
+  `Mesa e Cadeira > Sofá/Cama`
 ]
 
 const TIMEOUT = 3000
