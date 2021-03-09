@@ -24,7 +24,10 @@ const ASSUNTOS = [
   `Android > iOS`,
   `3.5 > 5.0`,
   `Mesa e Cadeira > Sofá/Cama`,
-  `Avião > Navio`
+  `Avião > Navio`,
+  `Dumbledore > Gandalf`,
+  `Goku > Superman`,
+  `Batman > Resto`
 ]
 
 const TIMEOUT = 3000
