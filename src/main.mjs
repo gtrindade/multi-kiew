@@ -12,19 +12,19 @@ const POLEMICA = `/criar_polemica`
 const ASSUNTOS = [
   `A terra é redonda!`,
   `PC > VG`,
-  `Star Wars I, II, III é bom`,
+  `Star Wars I, II, III são bons`,
   `Linux > Windows`,
   `Fone de Ouvido > Caixinha de som`,
   `Meia soquete é top`,
   `Esposa > Amigos`,
   `Dwarf Fortress > God of War`,
   `PT > PSDB`,
-  `Deus > Buda`,
   `Batman 3 é bom`,
   `Jessica Jones > Luke Cage`,
   `Android > iOS`,
   `3.5 > 5.0`,
-  `Mesa e Cadeira > Sofá/Cama`
+  `Mesa e Cadeira > Sofá/Cama`,
+  `Avião > Navio`
 ]
 
 const TIMEOUT = 3000
