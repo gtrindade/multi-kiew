@@ -57,19 +57,19 @@ function shadowrunRoll(message) {
   if (isNaN(entry) || input === "") {
     slimbot.sendMessage(chat.id, userMessage + `digita os trem direito sô`)
       .catch(console.log)
-    return hitMap
+    return
   }
   if (entry > 99) {
     slimbot.sendMessage(chat.id, message.from.username + `, sério mesmo... sem trollar.`)
       .catch(console.log)
-    return hitMap
+    return
   }
 
   if (entry === 0) {
-    return hitMap
+    return
   }
   
-  let result = r.roll(entry + "d6");
+  let result = roll.roll(entry + "d6");
   hitMap.rolled = result.rolled
   for (let i = 0; i <= entry; i++) {
     let rolled = result.rolled[i]
