@@ -5,8 +5,9 @@ const roll = new Roll()
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`])
 
 // Commands
-const ROLL = `/roll`
-const R = `/r`
+const ROLL = `/roll `
+const R = `/r `
+const SHADOWRUN = `/sr `
 const POLEMICA = `/criar_polemica`
 
 const ASSUNTOS = [
@@ -35,12 +36,71 @@ const TIMEOUT = 3000
 const aishoUrl = `https://imgur.com/a/kg2TW`
 const shiryuUrl = `https://imgur.com/a/GjYYHKB`
 
+function getUserMessage(message) {
+  return message.from.username ? message.from.username + ` => ` : ``
+}
+
+function shadowrunRoll(message) {
+  const {text, chat} = message
+  let [, input] = text.split(` `)
+  var userMessage = getUserMessage(message)
+
+  let hitMap = {
+    rolled: [],
+    hit: 0,
+    miss: 0,
+    critGlitch: false,
+    glitch: false
+  }
+  
+  let entry = Number(input)
+  if (isNaN(entry) || input === "") {
+    slimbot.sendMessage(chat.id, userMessage + `digita os trem direito sô`)
+      .catch(console.log)
+    return hitMap
+  }
+  if (entry > 99) {
+    slimbot.sendMessage(chat.id, message.from.username + `, sério mesmo... sem trollar.`)
+      .catch(console.log)
+    return hitMap
+  }
+
+  if (entry === 0) {
+    return hitMap
+  }
+  
+  let result = r.roll(entry + "d6");
+  hitMap.rolled = result.rolled
+  for (let i = 0; i <= entry; i++) {
+    let rolled = result.rolled[i]
+    if (rolled >= 5) {
+      hitMap["hit"] += 1
+    }
+    if (rolled === 1) {
+      hitMap["miss"] += 1
+    }
+  }
+  if (hitMap["miss"] > entry/2) {
+    hitMap["glitch"] = true
+    if (hitMap["hit"] < 1) {
+      hitMap["critGlitch"] = true
+    }
+  }
+  let glitch = ""
+  if (hitMap.glitch) {
+    if (hitMap.critGlitch) {
+      glitch += `C R I T I C A L   `;
+    }
+    glitch = `\n` + glitch + `G L I T C H`;
+  }
+  slimbot.sendMessage(chat.id, userMessage + input+`d6:\n\nRolled: [ ` + hitMap.rolled + ` ]\nHits: ` + hitMap.hit + glitch)
+    .catch(console.log)
+}
+
 function rollDice(command, message) {
   const {text, chat} = message
   var expression = text.substring(command.length, text.length).trim()
   const [rollExpression] = expression.split(` `)
-
-  console.log(rollExpression)
 
   if (rollExpression.length > 7) {
     slimbot.sendMessage(chat.id, message.from.username + `, sério mesmo... sem trollar.`)
@@ -48,7 +108,7 @@ function rollDice(command, message) {
     return
   }
 
-  var userMessage = message.from.username ? message.from.username + ` => ` : ``
+  var userMessage = getUserMessage(message)
   var output
   try {
     output = roll.roll(rollExpression)
@@ -85,6 +145,8 @@ slimbot.on(`message`, async (message) => {
     } else if (text.startsWith(POLEMICA)) {
       slimbot.sendMessage(chat.id, `Blz, lá vai:\n\n` + ASSUNTOS[Math.floor(Math.random() * ASSUNTOS.length)])
         .catch(console.log)
+    } else if (text.startsWith(SHADOWRUN)) {
+      shadowrunRoll(message)
     }
   }
 })
