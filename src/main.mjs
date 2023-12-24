@@ -3,6 +3,7 @@ import Roll from "roll";
 import { Shadowrun } from "./shadowrun.mjs";
 import { Dice } from "./dice.mjs";
 import { SUBJECTS } from "./controversy.mjs";
+import { Scheduler } from "./scheduler.mjs";
 
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
@@ -12,6 +13,7 @@ const ROLL = "/roll ";
 const R = "/r ";
 const SHADOWRUN = "/sr ";
 const POLEMICA = "/criar_polemica";
+const EVENTO = "/evento";
 
 const TIMEOUT = 3000;
 
@@ -20,25 +22,39 @@ const shiryuID =
 const aishoID =
   "AgACAgEAAxkBAAEBJ2Flh5HJPRQKnWOneEkgBoA9FUnsQgAC5qwxG6-0QEThrj1Ow8YvjQEAAwIAA3MAAzME";
 
-let sr = new Shadowrun(roll, slimbot);
-let dice = new Dice(roll, slimbot);
+const sr = new Shadowrun(roll, slimbot);
+const dice = new Dice(roll, slimbot);
+const scheduler = new Scheduler(slimbot);
 
 // Register listeners
 slimbot.on(`message`, async (message) => {
   console.log(message);
   const { text, chat } = message;
   console.log(`chat.id`, chat.id, `message`, text);
-  if (text) {
-    if (text.indexOf(`(AF)`) >= 0) {
+  switch (true) {
+    case text.indexOf(`(AF)`) >= 0:
       slimbot.sendPhoto(chat.id, aishoID).catch(console.log);
-    }
-    if (text.indexOf(`(SF)`) >= 0) {
+      break;
+    case text.indexOf(`(SF)`) >= 0:
       slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
-    } else if (text.startsWith(ROLL)) {
+      break;
+    case text.startsWith(EVENTO):
+      slimbot
+        .getChat(chat.id)
+        .then((c) => {
+          // TODO: We don't actually get a list of users using Bot API.
+          console.log(c);
+          scheduler.createEvent(c.id, text, c.active_usernames);
+        })
+        .catch(console.log);
+      break;
+    case text.startsWith(ROLL):
       dice.roll(ROLL, message);
-    } else if (text.startsWith(R)) {
+      break;
+    case text.startsWith(R):
       dice.roll(R, message);
-    } else if (text.startsWith(POLEMICA)) {
+      break;
+    case text.startsWith(POLEMICA):
       slimbot
         .sendMessage(
           chat.id,
@@ -46,9 +62,12 @@ slimbot.on(`message`, async (message) => {
             SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)],
         )
         .catch(console.log);
-    } else if (text.startsWith(SHADOWRUN)) {
+      break;
+    case text.startsWith(SHADOWRUN):
       sr.roll(message);
-    }
+      break;
+    default:
+      console.log(text);
   }
 });
 
