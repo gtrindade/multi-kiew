@@ -1,4 +1,4 @@
-import { getUserMessage } from "./util.mjs";
+import { getUserMessage, removeCommand } from "./util.mjs";
 
 export class Dice {
   constructor(roll, slimbot) {
@@ -8,7 +8,7 @@ export class Dice {
 
   roll(command, message) {
     const { text, chat } = message;
-    var expression = text.substring(command.length, text.length).trim();
+    var expression = removeCommand(command, text);
     const [rollExpression] = expression.split(` `);
 
     if (rollExpression.length > 7) {

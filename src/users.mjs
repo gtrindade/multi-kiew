@@ -1,4 +1,4 @@
-export const USERS = {
+export const Users = {
   "@AishoBH": 53142410,
   "@bmaraujo": 68102136,
   "@guilhermetmg": 55847128,
@@ -10,14 +10,34 @@ export const USERS = {
   "@VictorSouza010999": 1606523218,
 };
 
-export function getUserIDs(text) {
-  let parts = text.split(" ");
-  let mentioned = {};
-  for (let i in parts) {
-    if (!parts[i].startsWith("@")) {
-      continue;
-    }
-    mentioned[parts[i]] = USERS[parts[i]];
+export const Chats = {
+  // test channel
+  4055439111: ["@guilhermetmg"],
+  // off-topic
+  // 508022602: [],
+  // shadowrun
+  267393303: [
+    "@bmaraujo",
+    "@guilhermetmg",
+    "@k4mahl",
+    "@ProtomanBH",
+    "@Renas_Apenas",
+  ],
+  // darkest night
+  4048153285: [
+    "@bmaraujo",
+    "@guilhermetmg",
+    "@k4mahl",
+    "@Renas_Apenas",
+    "@VictorSouza010999",
+  ],
+};
+
+export function getUserIDs(chatID) {
+  let users = Chats[-chatID];
+  let userIDs = [];
+  for (let userName of users) {
+    userIDs.push(Users[userName]);
   }
-  return mentioned;
+  return userIDs;
 }

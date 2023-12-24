@@ -5,6 +5,7 @@ import { Dice } from "./dice.mjs";
 import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
 import { getUserIDs } from "./users.mjs";
+import { removeCommand } from "./util.mjs";
 
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
@@ -29,6 +30,7 @@ const scheduler = new Scheduler(slimbot);
 
 // Register listeners
 slimbot.on(`message`, async (message) => {
+  console.log(message);
   const { text, chat } = message;
   console.log(`chat.id`, chat.id, `message`, text);
   switch (true) {
@@ -39,10 +41,14 @@ slimbot.on(`message`, async (message) => {
       slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
       break;
     case text.startsWith(EVENTO):
-      let mentioned = getUserIDs(text);
-      console.log(mentioned);
-      if (Object.keys(mentioned).length) {
-        scheduler.createEvent(chat.id, text, mentioned);
+      let users = getUserIDs(chat.id);
+      if (Object.keys(users).length) {
+        scheduler.createEvent(
+          chat.id,
+          chat.title,
+          removeCommand(EVENTO, text),
+          users,
+        );
       }
       break;
     case text.startsWith(ROLL):
