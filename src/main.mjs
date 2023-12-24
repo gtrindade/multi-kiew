@@ -32,6 +32,7 @@ const scheduler = new Scheduler(slimbot);
 // TODO: clean up old events without needing a server restart.
 // TODO: create config command to register and update chat groups.
 // TODO: in case user changes his initial response after 1h, send a new message in the channel.
+// TODO: add reminders for users taking too long to respond
 
 // Register listeners
 slimbot.on(`message`, async (message) => {
