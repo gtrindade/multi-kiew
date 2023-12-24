@@ -11,20 +11,22 @@ export const Users = {
 };
 
 export const Chats = {
-  // test channel
-  4055439111: ["@guilhermetmg"],
-  // off-topic
-  // 508022602: [],
-  // shadowrun
-  267393303: [
+  "test multi-kiew": ["@guilhermetmg"],
+  shadowrun: [
     "@bmaraujo",
     "@guilhermetmg",
     "@k4mahl",
     "@ProtomanBH",
     "@Renas_Apenas",
   ],
-  // darkest night
-  4048153285: [
+  "darkest night": [
+    "@bmaraujo",
+    "@guilhermetmg",
+    "@k4mahl",
+    "@Renas_Apenas",
+    "@VictorSouza010999",
+  ],
+  "t20 - o culto": [
     "@bmaraujo",
     "@guilhermetmg",
     "@k4mahl",
@@ -33,8 +35,9 @@ export const Chats = {
   ],
 };
 
-export function getUserIDs(chatID) {
-  let users = Chats[-chatID];
+export function getUserIDs(chatTitle) {
+  let users = Chats[chatTitle.toLowerCase()];
+  if (!users) return [];
   let userIDs = [];
   for (let userName of users) {
     userIDs.push(Users[userName]);

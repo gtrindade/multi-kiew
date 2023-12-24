@@ -30,9 +30,8 @@ const scheduler = new Scheduler(slimbot);
 
 // Register listeners
 slimbot.on(`message`, async (message) => {
-  console.log(message);
-  const { text, chat } = message;
-  console.log(`chat.id`, chat.id, `message`, text);
+  const { text, chat, from } = message;
+  console.log(`[${chat.title || chat.id}] ${from.username}: ${text}`);
   switch (true) {
     case text.indexOf(`(AF)`) >= 0:
       slimbot.sendPhoto(chat.id, aishoID).catch(console.log);
@@ -41,15 +40,7 @@ slimbot.on(`message`, async (message) => {
       slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
       break;
     case text.startsWith(EVENTO):
-      let users = getUserIDs(chat.id);
-      if (Object.keys(users).length) {
-        scheduler.createEvent(
-          chat.id,
-          chat.title,
-          removeCommand(EVENTO, text),
-          users,
-        );
-      }
+      scheduler.createEvent(chat.id, chat.title, removeCommand(EVENTO, text));
       break;
     case text.startsWith(ROLL):
       dice.roll(ROLL, message);
@@ -69,8 +60,6 @@ slimbot.on(`message`, async (message) => {
     case text.startsWith(SHADOWRUN):
       sr.roll(message);
       break;
-    default:
-      console.log(text);
   }
 });
 
