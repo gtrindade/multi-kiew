@@ -4,6 +4,7 @@ import { Shadowrun } from "./shadowrun.mjs";
 import { Dice } from "./dice.mjs";
 import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
+import { getUserIDs } from "./users.mjs";
 
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
@@ -28,7 +29,6 @@ const scheduler = new Scheduler(slimbot);
 
 // Register listeners
 slimbot.on(`message`, async (message) => {
-  console.log(message);
   const { text, chat } = message;
   console.log(`chat.id`, chat.id, `message`, text);
   switch (true) {
@@ -39,14 +39,11 @@ slimbot.on(`message`, async (message) => {
       slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
       break;
     case text.startsWith(EVENTO):
-      slimbot
-        .getChat(chat.id)
-        .then((c) => {
-          // TODO: We don't actually get a list of users using Bot API.
-          console.log(c);
-          scheduler.createEvent(c.id, text, c.active_usernames);
-        })
-        .catch(console.log);
+      let mentioned = getUserIDs(text);
+      console.log(mentioned);
+      if (Object.keys(mentioned).length) {
+        scheduler.createEvent(chat.id, text, mentioned);
+      }
       break;
     case text.startsWith(ROLL):
       dice.roll(ROLL, message);
