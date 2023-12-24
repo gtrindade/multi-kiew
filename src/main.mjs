@@ -28,10 +28,18 @@ const sr = new Shadowrun(roll, slimbot);
 const dice = new Dice(roll, slimbot);
 const scheduler = new Scheduler(slimbot);
 
+// TODO: send message to user after they start the bot in case of an error.
+// TODO: clean up old events without needing a server restart.
+// TODO: create config command to register and update chat groups.
+// TODO: in case user changes his initial response after 1h, send a new message in the channel.
+
 // Register listeners
 slimbot.on(`message`, async (message) => {
   const { text, chat, from } = message;
   console.log(`[${chat.title || chat.id}] ${from.username}: ${text}`);
+  if (!text) {
+    return;
+  }
   switch (true) {
     case text.indexOf(`(AF)`) >= 0:
       slimbot.sendPhoto(chat.id, aishoID).catch(console.log);

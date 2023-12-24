@@ -8,10 +8,11 @@ export const Users = {
   "@ProtomanBH": 844843992,
   "@Renas_Apenas": 5479385410,
   "@VictorSouza010999": 1606523218,
+  "@p_trindade": 67498014,
 };
 
 export const Chats = {
-  "test multi-kiew": ["@guilhermetmg"],
+  "test multi-kiew": ["@guilhermetmg", "@p_trindade"],
   shadowrun: [
     "@bmaraujo",
     "@guilhermetmg",
@@ -43,4 +44,13 @@ export function getUserIDs(chatTitle) {
     userIDs.push(Users[userName]);
   }
   return userIDs;
+}
+
+export function getUsername(userID) {
+  for (let user in Users) {
+    if (Users[user] === userID) {
+      return user;
+    }
+  }
+  return "not found";
 }

@@ -1,4 +1,4 @@
-import { Chats, getUserIDs } from "./users.mjs";
+import { Chats, getUserIDs, getUsername } from "./users.mjs";
 
 export class Scheduler {
   constructor(slimbot) {
@@ -19,10 +19,7 @@ export class Scheduler {
       }
       if (!this.events[m]) {
         this.s
-          .sendMessage(
-            query.message.chat.id,
-            "Esse evento não existe mais, por favor crie outro",
-          )
+          .sendMessage(query.message.chat.id, "Esse evento não existe mais.")
           .catch(console.log);
         return;
       }
@@ -48,7 +45,7 @@ export class Scheduler {
       r: "n",
     });
 
-    const error = this.validateName(msg, yesCallback, noCallback);
+    const error = this.validate(chatTitle, msg, yesCallback, noCallback);
     if (error) {
       this.s
         .sendMessage(chatID, error, { parse_mode: "Markdown" })
@@ -97,11 +94,22 @@ export class Scheduler {
     for (let user of userIDs) {
       this.s
         .sendMessage(user, chatTitle + " - " + msg, optionalParams)
-        .catch(console.log);
+        .catch((e) => {
+          console.log(e);
+          const errMsg = `Usuário ${getUsername(
+            user,
+          )} precisa dar start no @multikiewbot`;
+          console.log(errMsg);
+          this.s.sendMessage(chatID, errMsg).catch(console.log);
+        });
     }
   }
 
-  validateName(msg, yesCallback, noCallback) {
+  validate(chatTitle, msg, yesCallback, noCallback) {
+    if (!chatTitle) {
+      return "Esse commando só funciona em grupos registrados";
+    }
+
     if (msg === "@multikiewbot") {
       return "Escreva uma descrição usando esse formato:\n\n\t\t_/evento RPG Sexta-Feira 21/12 21h BRT_";
     }
@@ -117,7 +125,9 @@ export class Scheduler {
 
   updateStatus(msg, username, response) {
     const { message_id, text } = this.events[msg].eventMsg.result;
-    const newText = text.replace(`${username} ❔`, `${username} ${response}`);
+    const regex = new RegExp(`@${username}.*`, "m");
+    const newText = text.replace(regex, `@${username} ${response}`);
+    this.events[msg].eventMsg.result.text = newText;
     if (newText !== text) {
       this.s.editMessageText(this.events[msg].chatID, message_id, newText);
     }
