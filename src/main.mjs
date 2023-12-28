@@ -4,18 +4,25 @@ import { Shadowrun } from "./shadowrun.mjs";
 import { Dice } from "./dice.mjs";
 import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
-import { getUserIDs } from "./users.mjs";
+import { DataManager } from "./data.mjs";
 import { removeCommand } from "./util.mjs";
 
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
 
 // Commands
+const START = "/start";
 const ROLL = "/roll ";
 const R = "/r ";
 const SHADOWRUN = "/sr ";
-const POLEMICA = "/criar_polemica";
-const EVENTO = "/evento";
+const CHAT_ID = "/chat_id";
+const CONTROVERSY = "/criar_polemica";
+const EVENTS = "/eventos";
+const ADD_EVENT = "/criar_evento";
+const REMOVE_EVENT = "/remover_evento";
+const GROUPS = "/grupos";
+const ADD_GROUP = "/criar_grupo";
+const REMOVE_GROUP = "/remover_grupo";
 
 const TIMEOUT = 3000;
 
@@ -24,40 +31,72 @@ const shiryuID =
 const aishoID =
   "AgACAgEAAxkBAAEBJ2Flh5HJPRQKnWOneEkgBoA9FUnsQgAC5qwxG6-0QEThrj1Ow8YvjQEAAwIAA3MAAzME";
 
+const mgr = new DataManager();
 const sr = new Shadowrun(roll, slimbot);
 const dice = new Dice(roll, slimbot);
-const scheduler = new Scheduler(slimbot);
+const scheduler = new Scheduler(slimbot, mgr);
 
-// TODO: send message to user after they start the bot in case of an error.
-// TODO: clean up old events without needing a server restart.
-// TODO: create config command to register and update chat groups.
 // TODO: in case user changes his initial response after 1h, send a new message in the channel.
 // TODO: add reminders for users taking too long to respond
 
-// Register listeners
 slimbot.on(`message`, async (message) => {
   const { text, chat, from } = message;
-  console.log(`[${chat.title || chat.id}] ${from.username}: ${text}`);
+  console.log(
+    `[${chat.title || chat.id}] ${from.username || from.first_name}: ${text}`,
+  );
   if (!text) {
     return;
   }
   switch (true) {
     case text.indexOf(`(AF)`) >= 0:
       slimbot.sendPhoto(chat.id, aishoID).catch(console.log);
-      break;
     case text.indexOf(`(SF)`) >= 0:
       slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
+    case text.startsWith(CHAT_ID):
+      await slimbot.sendMessage(chat.id, chat.id);
       break;
-    case text.startsWith(EVENTO):
-      scheduler.createEvent(chat.id, chat.title, removeCommand(EVENTO, text));
+    case text.startsWith(START):
+      const { username, id } = from;
+      if (!username || !id) {
+        slimbot.sendMessage(
+          chat.id,
+          "Por favor registre um username no telegram\nhttps://telegram.org/faq?setln=uz#q-what-are-usernames-how-do-i-get-one",
+        );
+        return;
+      }
+      await mgr.setUser("@" + username, id);
+      break;
+    case text.startsWith(ADD_GROUP):
+      await scheduler.createGroup(
+        chat.id,
+        chat.title,
+        removeCommand(ADD_GROUP, text),
+      );
+      break;
+    case text.startsWith(REMOVE_GROUP):
+      await scheduler.removeGroup(chat.id);
+      break;
+    case text.startsWith(GROUPS):
+      await scheduler.listGroups(chat.id, chat.title);
+      break;
+    case text.startsWith(REMOVE_EVENT):
+      await scheduler.removeEvent(chat.id);
+      break;
+    case text.startsWith(EVENTS):
+      await scheduler.listEvents(chat.id, chat.title);
+      break;
+    case text.startsWith(ADD_EVENT):
+      await scheduler.createEvent(
+        chat.id,
+        chat.title,
+        removeCommand(ADD_EVENT, text),
+      );
       break;
     case text.startsWith(ROLL):
-      dice.roll(ROLL, message);
-      break;
     case text.startsWith(R):
       dice.roll(R, message);
       break;
-    case text.startsWith(POLEMICA):
+    case text.startsWith(CONTROVERSY):
       slimbot
         .sendMessage(
           chat.id,
@@ -72,6 +111,5 @@ slimbot.on(`message`, async (message) => {
   }
 });
 
-// Call API
 console.log(`listening...`);
 slimbot.startPolling();
