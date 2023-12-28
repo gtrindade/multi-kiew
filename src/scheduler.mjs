@@ -1,3 +1,5 @@
+import { Blob } from "buffer";
+
 export class Scheduler {
   constructor(slimbot, mgr) {
     this.mgr = mgr;
@@ -201,10 +203,10 @@ export class Scheduler {
   }
 
   async createGroup(chatID, chatTitle, text) {
-    if (chatTitle !== "") {
+    if (chatTitle === "") {
       await this.s.sendMessage(
         chatID,
-        "esse comando só pdoe ser usado em grupos.",
+        "esse comando só pode ser usado em grupos.",
       );
       return;
     }

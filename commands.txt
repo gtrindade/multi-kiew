@@ -3,7 +3,7 @@ r - o mesmo que roll
 sr - rola d6s para Shadowrun. Exemplo: /sr 5 vai rolar 5 d6s
 criar_polemica - Crie uma polêmica, mto provavelmente com o Shiryu
 criar_evento - criar um evento que precisa de confirmação no chat atual. Exemplo: /criar_evento Shadowrun Sexta 22/12 21h.
-remver_evento - remover o evento do chat atual.
+remover_evento - remover o evento do chat atual.
 eventos - lista os eventos, limitado pelo grupo atual, ou todos se mandar direto pro @multikiewbot
 criar_grupo - registra o grupo com a lista de usuários. Exemplo: /criar_grupo @p_trindade @guilhermetmg.
 remover_grupo - remove o grupo atual.
