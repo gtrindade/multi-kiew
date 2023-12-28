@@ -53,9 +53,7 @@ export class Scheduler {
       noCallback,
     );
     if (error) {
-      this.s
-        .sendMessage(chatID, error, { parse_mode: "Markdown" })
-        .catch(console.log);
+      this.s.sendMessage(chatID, error).catch(console.log);
       return;
     }
     let newEvent = {
@@ -117,12 +115,12 @@ export class Scheduler {
   }
 
   validate(chatTitle, chatID, msg, yesCallback, noCallback) {
-    if (!chatTitle) {
-      return "Esse commando só funciona em grupos registrados.";
+    if (msg.trim() === "" || msg === "@multikiewbot") {
+      return "Escreva uma descrição usando esse formato:\n\n\t\t/criar_evento RPG Sexta-Feira 21/12 21h BRT";
     }
 
-    if (msg === "@multikiewbot") {
-      return "Escreva uma descrição usando esse formato:\n\n\t\t_/evento RPG Sexta-Feira 21/12 21h BRT";
+    if (!chatTitle) {
+      return "Esse commando só funciona em grupos registrados.";
     }
 
     if (this.mgr.getEvent(chatID)) {
