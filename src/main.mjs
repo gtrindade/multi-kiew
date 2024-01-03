@@ -50,8 +50,10 @@ slimbot.on(`message`, async (message) => {
   switch (true) {
     case text.indexOf(`(AF)`) >= 0:
       slimbot.sendPhoto(chat.id, aishoID).catch(console.log);
+      break;
     case text.indexOf(`(SF)`) >= 0:
       slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
+      break;
     case text.startsWith(CHAT_ID):
       await slimbot.sendMessage(chat.id, chat.id);
       break;
