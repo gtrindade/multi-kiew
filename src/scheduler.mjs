@@ -1,5 +1,9 @@
 import { Blob } from "buffer";
 
+const CHICK = "🐔";
+const ARM = "💪";
+const QUESTION = "❔";
+
 export class Scheduler {
   constructor(slimbot, mgr) {
     this.mgr = mgr;
@@ -11,10 +15,10 @@ export class Scheduler {
       let botResponse = "";
       switch (r) {
         case "y":
-          botResponse = "💪";
+          botResponse = ARM;
           break;
         case "n":
-          botResponse = "🐔";
+          botResponse = CHICK;
           break;
       }
       if (botResponse !== "" && query && query.message && query.message.chat) {
@@ -74,7 +78,7 @@ export class Scheduler {
       return;
     }
     for (let user of users) {
-      eventText += "\t" + user + " ❔\n";
+      eventText += "\t" + user + ` ${QUESTION}\n`;
     }
     const eventMsg = await this.s.sendMessage(chatID, eventText);
     if (eventMsg && eventMsg.result) {
@@ -138,7 +142,16 @@ export class Scheduler {
     const newSummary = summary.replace(regex, `@${username} ${response}`);
     await this.mgr.setEvent(chatID, msg, newSummary, messageID);
     if (newSummary !== summary) {
-      this.s.editMessageText(chatID, messageID, newSummary);
+      await this.s.editMessageText(chatID, messageID, newSummary);
+      if (
+        newSummary.indexOf(CHICK) === -1 &&
+        newSummary.indexOf(QUESTION) === -1
+      ) {
+        await this.s.sendMessage(chatID, `Evento confirmado, seus putos!`, {
+          reply_to_message_id: messageID,
+        });
+        this.removeEvent(chatID, true);
+      }
     }
   }
 
@@ -180,13 +193,17 @@ export class Scheduler {
     await this.s.sendMessage(chatID, msg);
   }
 
-  async removeEvent(chatID) {
+  async removeEvent(chatID, silent) {
+    var msg = "";
     try {
       await this.mgr.removeEvent(chatID);
-      this.s.sendMessage(chatID, "Evento removido com sucesso.");
+      msg = "Evento removido com sucesso.";
     } catch (e) {
       console.log(e);
-      this.s.sendMessage(chatID, "Erro ao remover evento.");
+      msg = "Erro ao remover evento.";
+    }
+    if (!silent && msg !== "") {
+      this.s.sendMessage(chatID, msg);
     }
   }
 
