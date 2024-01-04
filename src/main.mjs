@@ -95,6 +95,8 @@ slimbot.on(`message`, async (message) => {
       );
       break;
     case text.startsWith(ROLL):
+      dice.roll(ROLL, message);
+      break;
     case text.startsWith(R):
       dice.roll(R, message);
       break;

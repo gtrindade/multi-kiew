@@ -98,22 +98,33 @@ export class DataManager {
   }
 
   async deleteGroup(chatID) {
+    if (!this.groups[`${chatID}`]) {
+      return false;
+    }
     delete this.groups[`${chatID}`];
     await this.saveGroups();
+    return true;
   }
 
-  async setEvent(chatID, msg, summary, messageID) {
+  async setEvent(chatID, msg, summary, messageID, confirmed) {
     this.events[`${chatID}`] = {
       msg,
       summary,
       messageID,
     };
+    if (confirmed) {
+      this.events[`${chatID}`].confirmed = true;
+    }
     await this.saveEvents();
   }
 
   async removeEvent(chatID) {
+    if (!this.events[`${chatID}`]) {
+      return false;
+    }
     delete this.events[`${chatID}`];
     await this.saveEvents();
+    return true;
   }
 
   getEvent(chatID) {

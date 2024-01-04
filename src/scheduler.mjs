@@ -23,10 +23,15 @@ export class Scheduler {
       }
       if (botResponse !== "" && query && query.message && query.message.chat) {
         const { username, id } = query.message.chat;
-        if (!this.mgr.getEvent(c)) {
-          this.s
-            .sendMessage(id, "Esse evento não existe mais.")
-            .catch(console.log);
+        const event = this.mgr.getEvent(c);
+        let msg;
+        if (!event) {
+          msg = "Não tem nenhum evento ativo.";
+        } else if (event.confirmed) {
+          msg = "Esse evento já foi confirmado, putando.";
+        }
+        if (msg) {
+          this.s.sendMessage(id, msg).catch(console.log);
           return;
         }
         this.updateStatus(c, m, username, botResponse);
@@ -57,7 +62,7 @@ export class Scheduler {
       noCallback,
     );
     if (error) {
-      this.s.sendMessage(chatID, error).catch(console.log);
+      await this.s.sendMessage(chatID, error).catch(console.log);
       return;
     }
     let newEvent = {
@@ -106,14 +111,14 @@ export class Scheduler {
 
     const userIDs = this.mgr.getUserIDs(chatID);
     for (let user of userIDs) {
-      this.s
+      await this.s
         .sendMessage(user, chatTitle + " - " + msg, optionalParams)
-        .catch((e) => {
+        .catch(async (e) => {
           console.log(e);
           const errMsg = `Usuário ${this.mgr.getUsername(
             user,
           )} precisa dar start no @multikiewbot`;
-          this.s.sendMessage(chatID, errMsg).catch(console.log);
+          await this.s.sendMessage(chatID, errMsg).catch(console.log);
         });
     }
   }
@@ -127,8 +132,9 @@ export class Scheduler {
       return "Esse commando só funciona em grupos registrados.";
     }
 
-    if (this.mgr.getEvent(chatID)) {
-      return "Já tem um evento ativo nesse grupo.";
+    const existingEvent = this.mgr.getEvent(chatID);
+    if (existingEvent && !existingEvent.confirmed) {
+      return "Já tem um evento não confirmado nesse grupo. Use /eventos para ver.";
     }
 
     if (new Blob([noCallback]).size > 64 || new Blob([yesCallback]).size > 64) {
@@ -140,19 +146,25 @@ export class Scheduler {
     const { messageID, summary } = this.mgr.getEvent(chatID);
     const regex = new RegExp(`@${username}.*`, "m");
     const newSummary = summary.replace(regex, `@${username} ${response}`);
-    await this.mgr.setEvent(chatID, msg, newSummary, messageID);
+    let confirmed = false;
     if (newSummary !== summary) {
       await this.s.editMessageText(chatID, messageID, newSummary);
-      if (
-        newSummary.indexOf(CHICK) === -1 &&
-        newSummary.indexOf(QUESTION) === -1
-      ) {
-        await this.s.sendMessage(chatID, `Evento confirmado, seus putos!`, {
-          reply_to_message_id: messageID,
-        });
-        this.removeEvent(chatID, true);
+      if (newSummary.indexOf(QUESTION) === -1) {
+        let msg = "";
+        if (newSummary.indexOf(CHICK) === -1) {
+          confirmed = true;
+          msg = `Confirmado, seus putos!`;
+        } else if (response !== ARM) {
+          msg = `Miou...`;
+        }
+        if (msg) {
+          await this.s.sendMessage(chatID, msg, {
+            reply_to_message_id: messageID,
+          });
+        }
       }
     }
+    await this.mgr.setEvent(chatID, msg, newSummary, messageID, confirmed);
   }
 
   async listEvents(chatID, chatTitle) {
@@ -160,7 +172,7 @@ export class Scheduler {
     if (chatTitle) {
       events = events.filter((x) => x.chatID === chatID);
     }
-    events = events.map((x) => x.msg);
+    events = events.map((x) => x.msg + (x.confirmed ? " - confirmado!" : ""));
     if (!events || !events.length) {
       await this.s.sendMessage(chatID, "nenhum evento registrado.");
       return;
@@ -196,24 +208,34 @@ export class Scheduler {
   async removeEvent(chatID, silent) {
     var msg = "";
     try {
-      await this.mgr.removeEvent(chatID);
-      msg = "Evento removido com sucesso.";
+      if (!(await this.mgr.removeEvent(chatID))) {
+        msg = "Nada para remover";
+      } else {
+        msg = "Evento removido com sucesso.";
+      }
     } catch (e) {
       console.log(e);
       msg = "Erro ao remover evento.";
     }
     if (!silent && msg !== "") {
-      this.s.sendMessage(chatID, msg);
+      await this.s.sendMessage(chatID, msg);
     }
   }
 
   async removeGroup(chatID) {
+    let msg = "";
     try {
-      await this.mgr.deleteGroup(chatID);
-      this.s.sendMessage(chatID, "Grupo removido com sucesso.");
+      if (await this.mgr.deleteGroup(chatID)) {
+        msg = "Grupo removido com sucesso.";
+      } else {
+        msg = "Nada para remover";
+      }
     } catch (e) {
+      msg = "Erro ao remover grupo.";
       console.log(e);
-      this.s.sendMessage(chatID, "Erro ao remover grupo.");
+    }
+    if (msg) {
+      await this.s.sendMessage(chatID, msg);
     }
   }
 
@@ -251,6 +273,7 @@ export class Scheduler {
       }
       if (!this.mgr.getUserID(username)) {
         await this.s.sendMessage(
+          chatID,
           "O usuário " + username + " precisa iniciar o @multikiewbot",
         );
         continue;
@@ -266,7 +289,7 @@ export class Scheduler {
       await this.s.sendMessage(chatID, "Grupo registrado com sucesso.");
     } catch (e) {
       console.log(e);
-      await this.s.sendMessage(chatID, "erro ao criar grupo.");
+      await this.s.sendMessage(chatID, "Erro ao criar grupo.");
     }
   }
 }
