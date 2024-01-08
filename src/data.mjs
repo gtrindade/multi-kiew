@@ -66,7 +66,7 @@ export class DataManager {
   }
 
   getUsername(userID) {
-    for (let user in Users) {
+    for (let user in this.users) {
       if (this.users[user] === userID) {
         return user;
       }
