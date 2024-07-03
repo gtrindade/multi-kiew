@@ -8,7 +8,19 @@ export class DataManager {
   }
 
   loadFile(kind) {
-    let data = fs.readFileSync(`./data/${kind}.json`);
+    const filePath = `./data/${kind}.json`;
+    let data = {};
+    try {
+      data = fs.readFileSync(filePath);
+    } catch {
+      try {
+        fs.mkdirSync("./data", { recursive: true });
+        fs.writeFileSync(filePath, "{}", { flag: "w+" });
+      } catch (e) {
+        console.log(`failed to create ${kind}`, e);
+      }
+    }
+
     return JSON.parse(data);
   }
 
@@ -21,6 +33,7 @@ export class DataManager {
           if (err) {
             console.log(`failed to write ${kind}`);
             reject();
+            return;
           }
           console.log(`successfully saved ${kind}`);
           resolve();
