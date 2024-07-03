@@ -28,7 +28,7 @@ export class Scheduler {
         if (!event) {
           msg = "Não tem nenhum evento ativo.";
         } else if (event.confirmed) {
-          msg = "Esse evento já foi confirmado, putando.";
+          msg = "Esse evento já foi confirmado, putano.";
         }
         if (msg) {
           this.s.sendMessage(id, msg).catch(console.log);
