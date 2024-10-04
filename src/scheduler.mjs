@@ -134,7 +134,7 @@ export class Scheduler {
 
     const existingEvent = this.mgr.getEvent(chatID);
     if (existingEvent && !existingEvent.confirmed) {
-      return "Já tem um evento não confirmado nesse grupo. Use /eventos para ver.";
+      return "Já tem um evento não confirmado nesse grupo. Use /eventos para ver ou /remover_evento para limpar.";
     }
 
     if (new Blob([noCallback]).size > 64 || new Blob([yesCallback]).size > 64) {
@@ -150,12 +150,12 @@ export class Scheduler {
     if (newSummary !== summary) {
       await this.s.editMessageText(chatID, messageID, newSummary);
       if (newSummary.indexOf(QUESTION) === -1) {
+        confirmed = true;
         let msg = "";
         if (newSummary.indexOf(CHICK) === -1) {
-          confirmed = true;
-          msg = `Confirmado, seus putos!`;
+          msg = `Todos confirmados, não vai ter garçom parado nem puta triste!`;
         } else if (response !== ARM) {
-          msg = `Miou...`;
+          msg = `Tem uns ${CHICK} aí, putanos...`;
         }
         if (msg) {
           await this.s.sendMessage(chatID, msg, {
