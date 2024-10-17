@@ -250,7 +250,7 @@ export class Scheduler {
     if (text === "@multikiewbot" || text === "") {
       await this.s.sendMessage(
         chatID,
-        "Use o seguinte formato: /criar_grupo @p_trindade @guilhermetmg.",
+        "Use o seguinte formato: /criar_grupo @usuario1 @usuario2.",
       );
       return;
     }
