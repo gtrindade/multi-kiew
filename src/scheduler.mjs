@@ -154,7 +154,7 @@ export class Scheduler {
         let msg = "";
         if (newSummary.indexOf(CHICK) === -1) {
           msg = `Todos confirmados, não vai ter garçom parado nem puta triste!`;
-        } else if (response !== ARM) {
+        } else {
           msg = `Tem uns ${CHICK} aí, putanos...`;
         }
         if (msg) {
