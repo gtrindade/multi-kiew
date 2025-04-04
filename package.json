@@ -10,9 +10,11 @@
   "author": "ggoncalves",
   "license": "MIT",
   "dependencies": {
+    "ollama": "^0.5.14",
     "request": "^2.83.0",
     "roll": "^1.2.0",
-    "slimbot": "^5.1.0"
+    "slimbot": "^5.1.0",
+    "xhr2": "^0.2.1"
   },
   "devDependencies": {
     "prettier": "3.1.1"

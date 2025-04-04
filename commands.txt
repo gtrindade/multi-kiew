@@ -1,3 +1,4 @@
+ai - Use para obter respostas de uma LLM. Atualmente rodando gemma3:1b. Use o commando /ai hi, how are you?
 roll - Use algo do tipo /roll 2d8+6
 r - o mesmo que roll
 sr - rola d6s para Shadowrun. Exemplo: /sr 5 vai rolar 5 d6s

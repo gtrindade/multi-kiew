@@ -1,12 +1,18 @@
 import Slimbot from "slimbot";
 import Roll from "roll";
+import xhr2 from "xhr2";
 import { Shadowrun } from "./shadowrun.mjs";
 import { Dice } from "./dice.mjs";
 import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
 import { DataManager } from "./data.mjs";
 import { removeCommand } from "./util.mjs";
+import { LLM, AI } from './ai.mjs';
+import { Ollama } from 'ollama';
 
+global.XMLHttpRequest = xhr2;
+
+const ollama = new Ollama({url: 'http://localhost:11434' });
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
 
@@ -35,9 +41,7 @@ const mgr = new DataManager();
 const sr = new Shadowrun(roll, slimbot);
 const dice = new Dice(roll, slimbot);
 const scheduler = new Scheduler(slimbot, mgr);
-
-// TODO: in case user changes his initial response after 1h, send a new message in the channel.
-// TODO: add reminders for users taking too long to respond
+const ai = new LLM(ollama, slimbot)
 
 slimbot.on(`message`, async (message) => {
   const { text, chat, from } = message;
@@ -111,6 +115,9 @@ slimbot.on(`message`, async (message) => {
       break;
     case text.startsWith(SHADOWRUN):
       sr.roll(message);
+      break;
+    case text.startsWith(AI):
+      ai.prompt(message);
       break;
   }
 });

@@ -9,7 +9,7 @@ export class DataManager {
 
   loadFile(kind) {
     const filePath = `./data/${kind}.json`;
-    let data = {};
+    let data = "{}";
     try {
       data = fs.readFileSync(filePath);
     } catch {
