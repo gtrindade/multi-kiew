@@ -65,9 +65,6 @@ export class Scheduler {
       await this.s.sendMessage(chatID, error).catch(console.log);
       return;
     }
-    let newEvent = {
-      chatID,
-    };
 
     let eventText = `
       ${chatTitle} - ${msg}

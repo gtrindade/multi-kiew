@@ -93,7 +93,7 @@ export class DataManager {
   }
 
   async setUsers(users) {
-    for (user in users) {
+    for (let user in users) {
       const { username, userID } = user;
       this.users[username] = userID;
     }

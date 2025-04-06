@@ -2,34 +2,62 @@ import { removeCommand } from "./util.mjs";
 
 export const AI = "/ai";
 
+const maxHistory = 30;
+
 export class LLM {
   constructor(ollama, slimbot) {
     this.o = ollama;
     this.s = slimbot;
+    this.m = {};
+  }
+
+  createMessage(text) {
+    return { role: "user", content: text };
+  }
+
+  addToList(list, text) {
+    const msg = this.createMessage(text);
+    if (!list) {
+      return [msg];
+    }
+    if (list.length > maxHistory) {
+      return [...list.slice(1, maxHistory), msg];
+    }
+    return [...list, msg];
+  }
+
+  pushMsgForUser(msg, userID) {
+    this.m[userID] = this.addToList(this.m[userID], msg);
   }
 
   async prompt(message) {
-    const { text, chat } = message;
-    var msg = removeCommand(AI, text);
+    const { text, chat, from } = message;
+    const msg = removeCommand(AI, text);
+    this.pushMsgForUser(msg, from.id);
 
-    let result;
+    let result, request;
     try {
-      result = await this.o.generate({
-          "model": "gemma3:1b",
-	  // "model": "deepseek-r1:1.5b",
-          "prompt": msg
-      });
-    } catch ( error ) {
-      this.s.sendMessage(
-          chat.id,
-          "Error generating response:" + error
-      ).catch(console.log);
+      request = {
+        model: "gemma3:1b",
+        // "model": "deepseek-r1:1.5b",
+        messages: this.m[from.id],
+      };
+      console.log(request);
+      result = await this.o.chat(request);
+    } catch (error) {
+      console.log(error);
+      this.s
+        .sendMessage(chat.id, "Error generating response: \n\n" + error, {
+          reply_to_message_id: message.message_id,
+        })
+        .catch(console.log);
       return;
     }
 
-    this.s.sendMessage(
-      chat.id,
-      result.response
-    ).catch(console.log);
+    await this.s
+      .sendMessage(chat.id, result.message.content, {
+        reply_to_message_id: message.message_id,
+      })
+      .catch(console.log);
   }
 }

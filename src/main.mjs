@@ -7,12 +7,12 @@ import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
 import { DataManager } from "./data.mjs";
 import { removeCommand } from "./util.mjs";
-import { LLM, AI } from './ai.mjs';
-import { Ollama } from 'ollama';
+import { LLM, AI } from "./ai.mjs";
+import { Ollama } from "ollama";
 
 global.XMLHttpRequest = xhr2;
 
-const ollama = new Ollama({url: 'http://localhost:11434' });
+const ollama = new Ollama({ url: "http://localhost:11434" });
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
 
@@ -30,8 +30,6 @@ const GROUPS = "/grupos";
 const ADD_GROUP = "/criar_grupo";
 const REMOVE_GROUP = "/remover_grupo";
 
-const TIMEOUT = 3000;
-
 const shiryuID =
   "AgACAgEAAxkBAAEBJ2Jlh5H9Mfdv7gnfJrnpnaMXQElTawAC56wxG6-0QETu8-pf_jVA1gEAAwIAA3MAAzME";
 const aishoID =
@@ -41,7 +39,7 @@ const mgr = new DataManager();
 const sr = new Shadowrun(roll, slimbot);
 const dice = new Dice(roll, slimbot);
 const scheduler = new Scheduler(slimbot, mgr);
-const ai = new LLM(ollama, slimbot)
+const ai = new LLM(ollama, slimbot);
 
 slimbot.on(`message`, async (message) => {
   const { text, chat, from } = message;
@@ -51,6 +49,8 @@ slimbot.on(`message`, async (message) => {
   if (!text) {
     return;
   }
+
+  let username, id;
   switch (true) {
     case text.indexOf(`(AF)`) >= 0:
       slimbot.sendPhoto(chat.id, aishoID).catch(console.log);
@@ -62,7 +62,9 @@ slimbot.on(`message`, async (message) => {
       await slimbot.sendMessage(chat.id, chat.id);
       break;
     case text.startsWith(START):
-      const { username, id } = from;
+      username = from.username;
+      id = from.id;
+
       if (!username || !id) {
         slimbot.sendMessage(
           chat.id,
