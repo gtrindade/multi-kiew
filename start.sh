@@ -1,1 +1,1 @@
-TELEGRAM_BOT_TOKEN=445546217:AAFYhLu9iou0I9VNfb4g4jGs6QPvW5KD5Sg /home/kiew/.nvm/versions/node/v22.14.0/bin/node --experimental-modules src/main.mjs
+TELEGRAM_BOT_TOKEN=445546217:AAFYhLu9iou0I9VNfb4g4jGs6QPvW5KD5Sg /home/kiew/.nvm/versions/node/v22.14.0/bin/node src/main.mjs
