@@ -15,8 +15,7 @@ export class LLM {
     return { role: "user", content: text };
   }
 
-  addToList(list, text) {
-    const msg = this.createMessage(text);
+  addToList(list, msg) {
     if (!list) {
       return [msg];
     }
@@ -26,7 +25,8 @@ export class LLM {
     return [...list, msg];
   }
 
-  pushMsgForUser(msg, userID) {
+  pushMsgForUser(text, userID) {
+    const msg = this.createMessage(text);
     this.m[userID] = this.addToList(this.m[userID], msg);
   }
 
@@ -37,13 +37,11 @@ export class LLM {
 
     let result, request;
     try {
-      request = {
+      result = await this.o.chat({
         model: "gemma3:1b",
         // "model": "deepseek-r1:1.5b",
         messages: this.m[from.id],
-      };
-      console.log(request);
-      result = await this.o.chat(request);
+      });
     } catch (error) {
       console.log(error);
       this.s
@@ -53,6 +51,8 @@ export class LLM {
         .catch(console.log);
       return;
     }
+
+    this.m[from.id] = this.addToList(this.m[from.id], result.message);
 
     await this.s
       .sendMessage(chat.id, result.message.content, {
