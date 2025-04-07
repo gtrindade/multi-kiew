@@ -2,7 +2,7 @@ import { removeCommand } from "./util.mjs";
 
 export const AI = "/ai";
 
-const maxHistory = 30;
+const maxHistory = 12;
 
 export class LLM {
   constructor(ollama, slimbot) {
