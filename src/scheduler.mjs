@@ -1,8 +1,16 @@
-import { Blob } from "buffer";
+import moment from "moment-timezone";
 
 const CHICK = "🐔";
 const ARM = "💪";
 const QUESTION = "❔";
+
+const DEFAULT_TIMEZONE = "America/Sao_Paulo";
+const INPUT_FORMAT = "DD/MM/YYYY HH:mm";
+const PRINT_FORMAT = "dddd, DD/MM/YYYY HH:mm";
+const DEFAULT_TIME = { hour: 21, minute: 0 };
+
+const FRIDAY = 5;
+const SATURDAY = 6;
 
 export class Scheduler {
   constructor(slimbot, mgr) {
@@ -20,6 +28,15 @@ export class Scheduler {
         case "n":
           botResponse = CHICK;
           break;
+        case `${FRIDAY}`:
+          this.doCreateEvent(c, query.message.chat.title, this.getFriday());
+          break;
+        case `${SATURDAY}`:
+          this.doCreateEvent(c, query.message.chat.title, this.getSaturday());
+          break;
+        default:
+          console.error("Unknown callback data", queryData);
+          return;
       }
       if (botResponse !== "" && query && query.message && query.message.chat) {
         const { username, id } = query.message.chat;
@@ -41,33 +58,28 @@ export class Scheduler {
   }
 
   async createEvent(chatID, chatTitle, msg) {
-    const baseCallbackData = {
-      m: msg,
-      c: chatID,
-    };
-    const yesCallback = JSON.stringify({
-      ...baseCallbackData,
-      r: "y",
-    });
-    const noCallback = JSON.stringify({
-      ...baseCallbackData,
-      r: "n",
-    });
-
-    const error = this.validate(
-      chatTitle,
-      chatID,
-      msg,
-      yesCallback,
-      noCallback,
-    );
+    const error = this.validate(chatTitle, chatID);
     if (error) {
       await this.s.sendMessage(chatID, error).catch(console.log);
       return;
     }
 
+    const date = await this.getDate(chatID, msg);
+    if (!date) {
+      return;
+    }
+
+    return this.doCreateEvent(chatID, chatTitle, date);
+  }
+
+  async doCreateEvent(chatID, chatTitle, date) {
+    this.collectUserResponses(chatID, chatTitle, date);
+    this.mgr.setEvent(chatID, date, "", 0, false);
+  }
+
+  async collectUserResponses(chatID, chatTitle, date) {
     let eventText = `
-      ${chatTitle} - ${msg}
+      ${chatTitle} - ${this.formatDate(date)}
 
 `;
 
@@ -85,8 +97,17 @@ export class Scheduler {
     const eventMsg = await this.s.sendMessage(chatID, eventText);
     if (eventMsg && eventMsg.result) {
       const { message_id, text } = eventMsg.result;
-      await this.mgr.setEvent(chatID, msg, text, message_id);
+      await this.mgr.setEvent(chatID, date, text, message_id);
     }
+
+    const yesCallback = JSON.stringify({
+      c: chatID,
+      r: "y",
+    });
+    const noCallback = JSON.stringify({
+      c: chatID,
+      r: "n",
+    });
 
     let optionalParams = {
       parse_mode: "Markdown",
@@ -109,7 +130,11 @@ export class Scheduler {
     const userIDs = this.mgr.getUserIDs(chatID);
     for (let user of userIDs) {
       await this.s
-        .sendMessage(user, chatTitle + " - " + msg, optionalParams)
+        .sendMessage(
+          user,
+          chatTitle + " - " + this.formatDate(date),
+          optionalParams,
+        )
         .catch(async (e) => {
           console.log(e);
           const errMsg = `Usuário ${this.mgr.getUsername(
@@ -120,27 +145,75 @@ export class Scheduler {
     }
   }
 
-  validate(chatTitle, chatID, msg, yesCallback, noCallback) {
-    if (msg.trim() === "" || msg === "@multikiewbot") {
-      return "Escreva uma descrição usando esse formato:\n\n\t\t/criar_evento RPG Sexta-Feira 21/12 21h BRT";
+  async getDate(chatID, msg) {
+    const date = moment(msg, INPUT_FORMAT);
+    if (date.isValid()) {
+      return date;
     }
 
+    const friday = this.getFriday();
+    const saturday = this.getSaturday();
+
+    const fridayCallback = JSON.stringify({
+      c: chatID,
+      r: `${FRIDAY}`,
+    });
+    const saturdayCallback = JSON.stringify({
+      c: chatID,
+      r: `${SATURDAY}`,
+    });
+
+    let optionalParams = {
+      parse_mode: "Markdown",
+      reply_markup: JSON.stringify({
+        inline_keyboard: [
+          [
+            {
+              text: this.formatDate(friday),
+              callback_data: fridayCallback,
+            },
+            {
+              text: this.formatDate(saturday),
+              callback_data: saturdayCallback,
+            },
+          ],
+        ],
+      }),
+    };
+
+    await this.s
+      .sendMessage(
+        chatID,
+        `Não entendi a data, use o formato: "${INPUT_FORMAT}" ou que tal essas?`,
+        optionalParams,
+      )
+      .catch(async (e) => {
+        console.error(e);
+        const errMsg = `Não consegui processar a resposta`;
+        await this.s.sendMessage(chatID, errMsg).catch(console.log);
+      });
+
+    return;
+  }
+
+  validate(chatTitle, chatID) {
     if (!chatTitle) {
       return "Esse commando só funciona em grupos registrados.";
+    }
+
+    const users = this.mgr.getUsers(chatID);
+    if (!users) {
+      return "Esse grupo não foi registrado. Use o comando /criar_grupo @usuario1 @usuario2...";
     }
 
     const existingEvent = this.mgr.getEvent(chatID);
     if (existingEvent && !existingEvent.confirmed) {
       return "Já tem um evento não confirmado nesse grupo. Use /eventos para ver ou /remover_evento para limpar.";
     }
-
-    if (new Blob([noCallback]).size > 64 || new Blob([yesCallback]).size > 64) {
-      return "Esse nome é muito grande.";
-    }
   }
 
   async updateStatus(chatID, msg, username, response) {
-    const { messageID, summary } = this.mgr.getEvent(chatID);
+    const { messageID, date, summary } = this.mgr.getEvent(chatID);
     const regex = new RegExp(`@${username}.*`, "m");
     const newSummary = summary.replace(regex, `@${username} ${response}`);
     let confirmed = false;
@@ -161,7 +234,7 @@ export class Scheduler {
         }
       }
     }
-    await this.mgr.setEvent(chatID, msg, newSummary, messageID, confirmed);
+    await this.mgr.setEvent(chatID, date, newSummary, messageID, confirmed);
   }
 
   async listEvents(chatID, chatTitle) {
@@ -251,6 +324,8 @@ export class Scheduler {
       );
       return;
     }
+    text = text.replace("@multikiewbot", "").trim();
+
     let usernames = text.split(" ");
     if (!usernames || !usernames.length) {
       await this.s.sendMessage(
@@ -288,5 +363,20 @@ export class Scheduler {
       console.log(e);
       await this.s.sendMessage(chatID, "Erro ao criar grupo.");
     }
+  }
+
+  getFriday() {
+    return moment().tz(DEFAULT_TIMEZONE).day(FRIDAY).set(DEFAULT_TIME);
+  }
+
+  getSaturday() {
+    return moment().tz(DEFAULT_TIMEZONE).day(SATURDAY).set(DEFAULT_TIME);
+  }
+
+  formatDate(date) {
+    if (!date?.format) {
+      return null;
+    }
+    return date.format(PRINT_FORMAT) + " BRT";
   }
 }

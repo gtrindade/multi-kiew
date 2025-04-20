@@ -17,11 +17,19 @@ export class DataManager {
         fs.mkdirSync("./data", { recursive: true });
         fs.writeFileSync(filePath, "{}", { flag: "w+" });
       } catch (e) {
-        console.log(`failed to create ${kind}`, e);
+        console.error(`failed to create ${kind}`, e);
       }
     }
 
-    return JSON.parse(data);
+    let parsedData = {};
+    try {
+      parsedData = JSON.parse(data);
+    } catch (e) {
+      console.error(`failed to parse ${kind}`, e);
+      return {};
+    }
+
+    return parsedData;
   }
 
   saveToFile(kind) {
@@ -119,9 +127,9 @@ export class DataManager {
     return true;
   }
 
-  async setEvent(chatID, msg, summary, messageID, confirmed) {
+  async setEvent(chatID, date, summary, messageID, confirmed) {
     this.events[`${chatID}`] = {
-      msg,
+      date,
       summary,
       messageID,
     };
