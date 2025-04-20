@@ -1,4 +1,8 @@
 import fs from "fs";
+import moment from "moment-timezone";
+
+const firstWarning = "firstWarning";
+const secondWarning = "secondWarning";
 
 export class DataManager {
   constructor() {
@@ -39,7 +43,7 @@ export class DataManager {
         JSON.stringify(this[kind], null, 2),
         (err) => {
           if (err) {
-            console.log(`failed to write ${kind}`);
+            console.error(`failed to write ${kind}`);
             reject();
             return;
           }
@@ -127,16 +131,49 @@ export class DataManager {
     return true;
   }
 
-  async setEvent(chatID, date, summary, messageID, confirmed) {
+  async setEvent(chatID, date, summary, messageID, confirmed, username) {
+    const confirmedUsers = this.events[`${chatID}`]?.confirmedUsers || [];
+    if (username) {
+      confirmedUsers.push(`@` + username);
+    }
     this.events[`${chatID}`] = {
       date,
       summary,
       messageID,
+      confirmedUsers,
     };
     if (confirmed) {
       this.events[`${chatID}`].confirmed = true;
     }
     await this.saveEvents();
+  }
+
+  async markWarning(chatID, warning) {
+    if (!this.events[`${chatID}`]) {
+      return;
+    }
+    this.events[`${chatID}`][warning] = true;
+    await this.saveEvents();
+    return;
+  }
+  async markFirstWarning(chatID) {
+    await this.markWarning(chatID, firstWarning);
+  }
+  async markSecondWarning(chatID) {
+    await this.markWarning(chatID, secondWarning);
+  }
+
+  getWarning(chatID, warning) {
+    if (!this.events[`${chatID}`]) {
+      return false;
+    }
+    return this.events[`${chatID}`][warning];
+  }
+  getFirstWarning(chatID) {
+    return this.getWarning(chatID, firstWarning);
+  }
+  getSecondWarning(chatID) {
+    return this.getWarning(chatID, secondWarning);
   }
 
   async removeEvent(chatID) {
@@ -157,6 +194,7 @@ export class DataManager {
     for (let e in this.events) {
       const event = { ...this.events[e] };
       event.chatID = parseInt(e);
+      event.date = moment(event.date);
       events.push(event);
     }
     return events;
@@ -171,5 +209,15 @@ export class DataManager {
       groups.push(group);
     }
     return groups;
+  }
+
+  listUsersFromGroup(chatID) {
+    const users = this.groups[chatID];
+    if (!users) return [];
+    let userNames = [];
+    for (let userName of users) {
+      userNames.push(userName);
+    }
+    return userNames;
   }
 }

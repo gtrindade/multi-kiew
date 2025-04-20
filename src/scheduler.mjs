@@ -4,6 +4,10 @@ const CHICK = "🐔";
 const ARM = "💪";
 const QUESTION = "❔";
 
+const REMINDER_INTERVAL = 5 * 1000; // TODO:set to 1 minute
+const FIRST_REMINDER = 12; // hours
+const LAST_REMINDER = 1; // hours
+
 const DEFAULT_TIMEZONE = "America/Sao_Paulo";
 const INPUT_FORMAT = "DD/MM/YYYY HH:mm";
 const PRINT_FORMAT = "dddd, DD/MM/YYYY HH:mm";
@@ -48,19 +52,73 @@ export class Scheduler {
           msg = "Esse evento já foi confirmado, putano.";
         }
         if (msg) {
-          this.s.sendMessage(id, msg).catch(console.log);
+          this.s.sendMessage(id, msg).catch(console.error);
           return;
         }
         this.updateStatus(c, m, username, botResponse);
-        this.s.sendMessage(id, botResponse).catch(console.log);
+        this.s.sendMessage(id, botResponse).catch(console.error);
       }
     });
+
+    moment.locale("pt-br");
+    setInterval(() => {
+      this.reminderLoop().catch(console.error);
+    }, REMINDER_INTERVAL);
+  }
+
+  async reminderLoop() {
+    const now = moment().tz(DEFAULT_TIMEZONE);
+    const events = this.mgr.listEvents();
+    if (!events || !events.length) {
+      return;
+    }
+    for (let event of events) {
+      const { chatID, date, confirmed, confirmedUsers } = event;
+      const isBefore = date.isBefore(now);
+      const timeLeft = moment.duration(date.diff(now));
+
+      if (isBefore) {
+        await this.removeEvent(chatID, true);
+      }
+      if (!confirmed || !confirmedUsers?.length) {
+        continue;
+      }
+
+      const shouldFirstWarning = date.diff(now, "hours") <= FIRST_REMINDER;
+      const shouldSecondWarning = date.diff(now, "hours") <= LAST_REMINDER;
+
+      let reminderText = "";
+      switch (true) {
+        case isBefore:
+          reminderText =
+            confirmedUsers.join(", ") +
+            `\n\n${confirmedUsers.length > 1 ? "Já entraram?" : "Já entrou?"}`;
+          await this.s.sendMessage(chatID, reminderText).catch(console.error);
+          break;
+        case shouldFirstWarning && !this.mgr.getFirstWarning(chatID):
+          await this.s
+            .sendMessage(
+              chatID,
+              `Putanos, o RPG vai ser em ${timeLeft.humanize()}...`,
+            )
+            .catch(console.error);
+          await this.mgr.markFirstWarning(chatID);
+          break;
+        case shouldSecondWarning && !this.mgr.getSecondWarning(chatID):
+          reminderText =
+            confirmedUsers.join(", ") +
+            `\n\nAgora é sério heim, vai começar em ${timeLeft.humanize()}!`;
+          await this.s.sendMessage(chatID, reminderText).catch(console.error);
+          await this.mgr.markSecondWarning(chatID);
+          break;
+      }
+    }
   }
 
   async createEvent(chatID, chatTitle, msg) {
     const error = this.validate(chatTitle, chatID);
     if (error) {
-      await this.s.sendMessage(chatID, error).catch(console.log);
+      await this.s.sendMessage(chatID, error).catch(console.error);
       return;
     }
 
@@ -136,11 +194,11 @@ export class Scheduler {
           optionalParams,
         )
         .catch(async (e) => {
-          console.log(e);
+          console.error(e);
           const errMsg = `Usuário ${this.mgr.getUsername(
             user,
           )} precisa dar start no @multikiewbot`;
-          await this.s.sendMessage(chatID, errMsg).catch(console.log);
+          await this.s.sendMessage(chatID, errMsg).catch(console.error);
         });
     }
   }
@@ -190,7 +248,7 @@ export class Scheduler {
       .catch(async (e) => {
         console.error(e);
         const errMsg = `Não consegui processar a resposta`;
-        await this.s.sendMessage(chatID, errMsg).catch(console.log);
+        await this.s.sendMessage(chatID, errMsg).catch(console.error);
       });
 
     return;
@@ -234,7 +292,17 @@ export class Scheduler {
         }
       }
     }
-    await this.mgr.setEvent(chatID, date, newSummary, messageID, confirmed);
+    if (response === CHICK) {
+      username = null;
+    }
+    await this.mgr.setEvent(
+      chatID,
+      date,
+      newSummary,
+      messageID,
+      confirmed,
+      username,
+    );
   }
 
   async listEvents(chatID, chatTitle) {
@@ -284,7 +352,7 @@ export class Scheduler {
         msg = "Evento removido com sucesso.";
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
       msg = "Erro ao remover evento.";
     }
     if (!silent && msg !== "") {
@@ -302,7 +370,7 @@ export class Scheduler {
       }
     } catch (e) {
       msg = "Erro ao remover grupo.";
-      console.log(e);
+      console.error(e);
     }
     if (msg) {
       await this.s.sendMessage(chatID, msg);
@@ -317,14 +385,13 @@ export class Scheduler {
       );
       return;
     }
-    if (text === "@multikiewbot" || text === "") {
+    if (text === "") {
       await this.s.sendMessage(
         chatID,
         "Use o seguinte formato: /criar_grupo @usuario1 @usuario2.",
       );
       return;
     }
-    text = text.replace("@multikiewbot", "").trim();
 
     let usernames = text.split(" ");
     if (!usernames || !usernames.length) {
@@ -360,7 +427,7 @@ export class Scheduler {
       await this.mgr.setGroup(chatID, validUsernames);
       await this.s.sendMessage(chatID, "Grupo registrado com sucesso.");
     } catch (e) {
-      console.log(e);
+      console.error(e);
       await this.s.sendMessage(chatID, "Erro ao criar grupo.");
     }
   }
@@ -377,6 +444,7 @@ export class Scheduler {
     if (!date?.format) {
       return null;
     }
-    return date.format(PRINT_FORMAT) + " BRT";
+    const formatted = date.format(PRINT_FORMAT) + " BRT";
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   }
 }

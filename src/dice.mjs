@@ -17,7 +17,7 @@ export class Dice {
           chat.id,
           message.from.username + `, sério mesmo... sem trollar.`,
         )
-        .catch(console.log);
+        .catch(console.error);
       return;
     }
 
@@ -30,7 +30,7 @@ export class Dice {
         this.s.sendMessage(chat.id, userMessage + `digita os trem direito sô`);
         return;
       } else {
-        console.log(e);
+        console.error(e);
       }
     }
 
@@ -44,6 +44,6 @@ export class Dice {
           ` ]\nTotal: ` +
           output.result,
       )
-      .catch(console.log);
+      .catch(console.error);
   }
 }

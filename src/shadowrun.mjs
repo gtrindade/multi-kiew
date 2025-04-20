@@ -23,7 +23,7 @@ export class Shadowrun {
     if (isNaN(entry) || input === "") {
       this.s
         .sendMessage(chat.id, userMessage + `digita os trem direito sô`)
-        .catch(console.log);
+        .catch(console.error);
       return;
     }
     if (entry > 99) {
@@ -32,7 +32,7 @@ export class Shadowrun {
           chat.id,
           message.from.username + `, sério mesmo... sem trollar.`,
         )
-        .catch(console.log);
+        .catch(console.error);
       return;
     }
 
@@ -75,6 +75,6 @@ export class Shadowrun {
           hitMap.hit +
           glitch,
       )
-      .catch(console.log);
+      .catch(console.error);
   }
 }

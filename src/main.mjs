@@ -53,10 +53,10 @@ slimbot.on(`message`, async (message) => {
   let username, id;
   switch (true) {
     case text.indexOf(`(AF)`) >= 0:
-      slimbot.sendPhoto(chat.id, aishoID).catch(console.log);
+      slimbot.sendPhoto(chat.id, aishoID).catch(console.error);
       break;
     case text.indexOf(`(SF)`) >= 0:
-      slimbot.sendPhoto(chat.id, shiryuID).catch(console.log);
+      slimbot.sendPhoto(chat.id, shiryuID).catch(console.error);
       break;
     case text.startsWith(CHAT_ID):
       await slimbot.sendMessage(chat.id, chat.id);
@@ -113,7 +113,7 @@ slimbot.on(`message`, async (message) => {
           `Blz, lá vai:\n\n` +
             SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)],
         )
-        .catch(console.log);
+        .catch(console.error);
       break;
     case text.startsWith(SHADOWRUN):
       sr.roll(message);

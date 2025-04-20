@@ -35,7 +35,7 @@ export class LLM {
     const msg = removeCommand(AI, text);
     this.pushMsgForUser(msg, from.id);
 
-    let result, request;
+    let result;
     try {
       result = await this.o.chat({
         model: "gemma3:1b",
@@ -43,12 +43,12 @@ export class LLM {
         messages: this.m[from.id],
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       this.s
         .sendMessage(chat.id, "Error generating response: \n\n" + error, {
           reply_to_message_id: message.message_id,
         })
-        .catch(console.log);
+        .catch(console.error);
       return;
     }
 
@@ -58,6 +58,6 @@ export class LLM {
       .sendMessage(chat.id, result.message.content, {
         reply_to_message_id: message.message_id,
       })
-      .catch(console.log);
+      .catch(console.error);
   }
 }
