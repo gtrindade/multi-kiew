@@ -4,7 +4,7 @@ const CHICK = "🐔";
 const ARM = "💪";
 const QUESTION = "❔";
 
-const REMINDER_INTERVAL = 5 * 1000; // TODO:set to 1 minute
+const REMINDER_INTERVAL = 60 * 1000; // 1 minute
 const FIRST_REMINDER = 12; // hours
 const LAST_REMINDER = 1; // hours
 
