@@ -39,7 +39,7 @@ export class LLM {
     try {
       result = await this.o.chat({
         model: "gemma3:1b",
-        // "model": "deepseek-r1:1.5b",
+        // "model": "deepseek-r1:1.5b"
         messages: this.m[from.id],
       });
     } catch (error) {

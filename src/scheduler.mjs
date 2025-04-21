@@ -21,7 +21,7 @@ export class Scheduler {
     this.mgr = mgr;
     this.s = slimbot;
 
-    this.s.on("callback_query", (query) => {
+    this.s.on("callback_query", async (query) => {
       const queryData = JSON.parse(query.data);
       const { m, r, c } = queryData;
       let botResponse = "";
@@ -33,15 +33,30 @@ export class Scheduler {
           botResponse = CHICK;
           break;
         case `${FRIDAY}`:
-          this.doCreateEvent(c, query.message.chat.title, this.getFriday());
+          if (this.mgr.getEvent(c)) {
+            return;
+          }
+          await this.doCreateEvent(
+            c,
+            query.message.chat.title,
+            this.getFriday(),
+          );
           break;
         case `${SATURDAY}`:
-          this.doCreateEvent(c, query.message.chat.title, this.getSaturday());
+          if (this.mgr.getEvent(c)) {
+            return;
+          }
+          await this.doCreateEvent(
+            c,
+            query.message.chat.title,
+            this.getSaturday(),
+          );
           break;
         default:
           console.error("Unknown callback data", queryData);
           return;
       }
+
       if (botResponse !== "" && query && query.message && query.message.chat) {
         const { username, id } = query.message.chat;
         const event = this.mgr.getEvent(c);
@@ -52,11 +67,11 @@ export class Scheduler {
           msg = "Esse evento já foi confirmado, putano.";
         }
         if (msg) {
-          this.s.sendMessage(id, msg).catch(console.error);
+          await this.s.sendMessage(id, msg).catch(console.error);
           return;
         }
-        this.updateStatus(c, m, username, botResponse);
-        this.s.sendMessage(id, botResponse).catch(console.error);
+        await this.updateStatus(c, m, username, botResponse);
+        await this.s.sendMessage(id, botResponse).catch(console.error);
       }
     });
 
@@ -239,12 +254,13 @@ export class Scheduler {
       }),
     };
 
+    let errMsg = `Não entendi a data, use o formato: "${INPUT_FORMAT}". Sugestões:`;
+    if (!msg || msg.trim() === "") {
+      errMsg = `Sugestões de data:`;
+    }
+
     await this.s
-      .sendMessage(
-        chatID,
-        `Não entendi a data, use o formato: "${INPUT_FORMAT}" ou que tal essas?`,
-        optionalParams,
-      )
+      .sendMessage(chatID, errMsg, optionalParams)
       .catch(async (e) => {
         console.error(e);
         const errMsg = `Não consegui processar a resposta`;
