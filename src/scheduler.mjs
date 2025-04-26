@@ -6,7 +6,7 @@ const QUESTION = "❔";
 
 const REMINDER_INTERVAL = 60 * 1000; // 1 minute
 const FIRST_REMINDER = 12; // hours
-const LAST_REMINDER = 1; // hours
+const LAST_REMINDER = 0; // hours
 
 const DEFAULT_TIMEZONE = "America/Sao_Paulo";
 const INPUT_FORMAT = "DD/MM/YYYY HH:mm";
