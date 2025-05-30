@@ -25,6 +25,7 @@ export class Scheduler {
       const queryData = JSON.parse(query.data);
       const { m, r, c } = queryData;
       let botResponse = "";
+
       switch (r) {
         case "y":
           botResponse = ARM;
@@ -141,6 +142,12 @@ export class Scheduler {
     if (!date) {
       return;
     }
+    if (date.isBefore(moment().tz(DEFAULT_TIMEZONE))) {
+      await this.s
+        .sendMessage(chatID, "A data não pode ser no passado, putano.")
+        .catch(console.error);
+      return;
+    }
 
     return this.doCreateEvent(chatID, chatTitle, date);
   }
@@ -158,10 +165,12 @@ export class Scheduler {
 
     const users = this.mgr.getUsers(chatID);
     if (!users) {
-      await this.s.sendMessage(
-        chatID,
-        "Esse grupo não foi registrado. Use o comando /criar_grupo @usuario1 @usuario2...",
-      );
+      await this.s
+        .sendMessage(
+          chatID,
+          "Esse grupo não foi registrado. Use o comando /criar_grupo @usuario1 @usuario2...",
+        )
+        .catch(console.error);
       return;
     }
     for (let user of users) {

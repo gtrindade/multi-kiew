@@ -1,4 +1,4 @@
-import { getUserMessage, removeCommand } from "./util.mjs";
+import { removeCommand } from "./util.mjs";
 
 export class Dice {
   constructor(roll, slimbot) {
@@ -7,27 +7,27 @@ export class Dice {
   }
 
   roll(command, message) {
-    const { text, chat } = message;
+    const { text, chat, message_id } = message;
     var expression = removeCommand(command, text);
     const [rollExpression] = expression.split(` `);
 
     if (rollExpression.length > 7) {
       this.s
-        .sendMessage(
-          chat.id,
-          message.from.username + `, sério mesmo... sem trollar.`,
-        )
+        .sendMessage(chat.id, `sério mesmo... sem trollar.`, {
+          reply_to_message_id: message_id,
+        })
         .catch(console.error);
       return;
     }
 
-    var userMessage = getUserMessage(message);
     var output;
     try {
       output = this.r.roll(rollExpression);
     } catch (e) {
       if (e.name == `InvalidInputError`) {
-        this.s.sendMessage(chat.id, userMessage + `digita os trem direito sô`);
+        this.s.sendMessage(chat.id, `Digita os trem direito sô`, {
+          reply_to_message_id: message_id,
+        });
         return;
       } else {
         console.error(e);
@@ -37,12 +37,8 @@ export class Dice {
     this.s
       .sendMessage(
         chat.id,
-        userMessage +
-          expression +
-          `:\n\nRolled: [ ` +
-          output.rolled +
-          ` ]\nTotal: ` +
-          output.result,
+        `\nRolled: [ ` + output.rolled + ` ]\nTotal: ` + output.result,
+        { reply_to_message_id: message_id },
       )
       .catch(console.error);
   }

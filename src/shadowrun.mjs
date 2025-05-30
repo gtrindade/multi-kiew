@@ -1,5 +1,3 @@
-import { getUserMessage } from "./util.mjs";
-
 export class Shadowrun {
   constructor(roll, slimbot) {
     this.r = roll;
@@ -7,9 +5,8 @@ export class Shadowrun {
   }
 
   roll(message) {
-    const { text, chat } = message;
+    const { text, chat, message_id } = message;
     let [, input] = text.split(` `);
-    var userMessage = getUserMessage(message);
 
     let hitMap = {
       rolled: [],
@@ -22,16 +19,17 @@ export class Shadowrun {
     let entry = Number(input);
     if (isNaN(entry) || input === "") {
       this.s
-        .sendMessage(chat.id, userMessage + `digita os trem direito sô`)
+        .sendMessage(chat.id, `Digita os trem direito sô`, {
+          reply_to_message_id: message_id,
+        })
         .catch(console.error);
       return;
     }
     if (entry > 99) {
       this.s
-        .sendMessage(
-          chat.id,
-          message.from.username + `, sério mesmo... sem trollar.`,
-        )
+        .sendMessage(chat.id, `Sério mesmo... sem trollar.`, {
+          reply_to_message_id: message_id,
+        })
         .catch(console.error);
       return;
     }
@@ -67,13 +65,8 @@ export class Shadowrun {
     this.s
       .sendMessage(
         chat.id,
-        userMessage +
-          input +
-          `d6:\n\nRolled: [ ` +
-          hitMap.rolled +
-          ` ]\nHits: ` +
-          hitMap.hit +
-          glitch,
+        `\nRolled: [ ` + hitMap.rolled + ` ]\nHits: ` + hitMap.hit + glitch,
+        { reply_to_message_id: message_id },
       )
       .catch(console.error);
   }
