@@ -133,7 +133,7 @@ export class DataManager {
 
   async setEvent(chatID, date, summary, messageID, confirmed, username) {
     const confirmedUsers = this.events[`${chatID}`]?.confirmedUsers || [];
-    if (username) {
+    if (username && !confirmedUsers.includes(`@` + username)) {
       confirmedUsers.push(`@` + username);
     }
     this.events[`${chatID}`] = {
