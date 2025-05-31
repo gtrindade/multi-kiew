@@ -4,7 +4,7 @@ const CHICK = "🐔";
 const ARM = "💪";
 const QUESTION = "❔";
 
-const REMINDER_INTERVAL = 60 * 1000; // 1 minute
+const REMINDER_INTERVAL = 1 * 1000; // 1 minute
 const FIRST_REMINDER = 12; // hours
 const LAST_REMINDER = 1; // hours
 
@@ -90,6 +90,7 @@ export class Scheduler {
     }
     for (let event of events) {
       const { chatID, date, confirmed, confirmedUsers } = event;
+      date.tz(DEFAULT_TIMEZONE);
       const isBefore = date.isBefore(now);
       const timeLeft = moment.duration(date.diff(now));
 
@@ -140,12 +141,6 @@ export class Scheduler {
 
     const date = await this.getDate(chatID, msg);
     if (!date) {
-      return;
-    }
-    if (date.isBefore(moment().tz(DEFAULT_TIMEZONE))) {
-      await this.s
-        .sendMessage(chatID, "A data não pode ser no passado, putano.")
-        .catch(console.error);
       return;
     }
 
@@ -228,8 +223,21 @@ export class Scheduler {
   }
 
   async getDate(chatID, msg) {
-    const date = moment(msg, INPUT_FORMAT);
+    const date = moment(msg, INPUT_FORMAT).tz(DEFAULT_TIMEZONE, true);
     if (date.isValid()) {
+      const nowInDefaultTimezone = moment().tz(DEFAULT_TIMEZONE);
+      if (date.isBefore(nowInDefaultTimezone)) {
+        await this.s
+          .sendMessage(
+            chatID,
+            `A data não pode ser no passado, putano.\n\nData em "${DEFAULT_TIMEZONE}": ${nowInDefaultTimezone.format(
+              INPUT_FORMAT,
+            )}`,
+          )
+          .catch(console.error);
+        return;
+      }
+
       return date;
     }
 
