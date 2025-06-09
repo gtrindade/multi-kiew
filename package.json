@@ -12,6 +12,7 @@
   "author": "ggoncalves",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^1.4.0",
     "moment-timezone": "^0.5.48",
     "ollama": "^0.5.14",
     "request": "^2.83.0",
