@@ -3,6 +3,7 @@ import moment from "moment-timezone";
 
 const firstWarning = "firstWarning";
 const secondWarning = "secondWarning";
+const lastWarning = "lastWarning";
 
 export class DataManager {
   constructor() {
@@ -136,23 +137,29 @@ export class DataManager {
     if (username && !confirmedUsers.includes(`@` + username)) {
       confirmedUsers.push(`@` + username);
     }
+    const currentEvent = structuredClone(this.events[`${chatID}`] || {});
+    currentEvent.warnings = currentEvent.warnings || {};
+    if (currentEvent.createdAt) {
+      currentEvent.updatedAt = moment().toISOString();
+    } else {
+      currentEvent.createdAt = moment().toISOString();
+    }
     this.events[`${chatID}`] = {
+      ...currentEvent,
       date,
       summary,
       messageID,
       confirmedUsers,
+      confirmed,
     };
-    if (confirmed) {
-      this.events[`${chatID}`].confirmed = true;
-    }
     await this.saveEvents();
   }
 
-  async markWarning(chatID, warning) {
+  async markWarning(chatID, warning, value = true) {
     if (!this.events[`${chatID}`]) {
       return;
     }
-    this.events[`${chatID}`][warning] = true;
+    this.events[`${chatID}`].warnings[warning] = value;
     await this.saveEvents();
     return;
   }
@@ -162,18 +169,24 @@ export class DataManager {
   async markSecondWarning(chatID) {
     await this.markWarning(chatID, secondWarning);
   }
+  async markLastWarning(chatID) {
+    await this.markWarning(chatID, lastWarning);
+  }
 
   getWarning(chatID, warning) {
     if (!this.events[`${chatID}`]) {
       return false;
     }
-    return this.events[`${chatID}`][warning];
+    return this.events[`${chatID}`].warnings[warning];
   }
   getFirstWarning(chatID) {
     return this.getWarning(chatID, firstWarning);
   }
   getSecondWarning(chatID) {
     return this.getWarning(chatID, secondWarning);
+  }
+  getLastWarning(chatID) {
+    return this.getWarning(chatID, lastWarning);
   }
 
   async removeEvent(chatID) {
