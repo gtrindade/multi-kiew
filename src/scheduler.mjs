@@ -4,9 +4,10 @@ const CHICK = "🐔";
 const ARM = "💪";
 const QUESTION = "❔";
 
-const REMINDER_INTERVAL = 1 * 1000; // 1 minute
+const REMINDER_INTERVAL = 6 * 1000; // 1 minute
 const FIRST_REMINDER = 12; // hours
-const LAST_REMINDER = 1; // hours
+const SECOND_REMINDER = 1; // hours
+const LAST_REMINDER = 1; // days
 
 const DEFAULT_TIMEZONE = "America/Sao_Paulo";
 const INPUT_FORMAT = "DD/MM/YYYY HH:mm";
@@ -89,7 +90,12 @@ export class Scheduler {
       return;
     }
     for (let event of events) {
-      const { chatID, date, confirmed, confirmedUsers } = event;
+      const { chatID, date, confirmed, confirmedUsers, createdAt, summary } =
+        event;
+      const allUsers = this.mgr.getUsers(chatID);
+      const unconfirmedUsers = allUsers.filter(
+        (x) => !confirmedUsers.includes(x),
+      );
       date.tz(DEFAULT_TIMEZONE);
       const isBefore = date.isBefore(now);
       const timeLeft = moment.duration(date.diff(now));
@@ -97,12 +103,40 @@ export class Scheduler {
       if (isBefore) {
         await this.removeEvent(chatID, true);
       }
-      if (!confirmed || !confirmedUsers?.length) {
-        continue;
+
+      for (let user of unconfirmedUsers) {
+        const warningKey = `daily_${user}`;
+        const lastWarning = this.mgr.getWarning(chatID, warningKey);
+        const now = moment().tz(DEFAULT_TIMEZONE);
+
+        const createdDate = moment(createdAt).tz(DEFAULT_TIMEZONE);
+        if (createdDate.format("YYYY-MM-DD") === now.format("YYYY-MM-DD")) {
+          break;
+        }
+
+        if (now.hour() >= 9) {
+          const today = now.format("YYYY-MM-DD");
+          if (!lastWarning || !lastWarning.startsWith(today)) {
+            const userID = this.mgr.getUserID(user);
+            if (userID) {
+              const summaryText = summary.split("\n")[0];
+              await this.s
+                .sendMessage(
+                  userID,
+                  `Putano, você ainda não respondeu:\n\n${summaryText}!`,
+                )
+                .catch(console.error);
+              await this.mgr.markWarning(chatID, warningKey, today);
+            }
+          }
+        }
       }
 
-      const shouldFirstWarning = date.diff(now, "hours") <= FIRST_REMINDER - 1;
-      const shouldSecondWarning = date.diff(now, "hours") <= LAST_REMINDER - 1;
+      const shouldFirstWarning =
+        confirmed && date.diff(now, "hours") <= FIRST_REMINDER - 1;
+      const shouldSecondWarning =
+        confirmed && date.diff(now, "hours") <= SECOND_REMINDER - 1;
+      const shouldLastWarning = date.diff(now, "days") <= LAST_REMINDER - 1;
 
       let reminderText = "";
       switch (true) {
@@ -111,6 +145,19 @@ export class Scheduler {
             confirmedUsers.join(", ") +
             `\n\n${confirmedUsers.length > 1 ? "Já entraram?" : "Já entrou?"}`;
           await this.s.sendMessage(chatID, reminderText).catch(console.error);
+          break;
+        case shouldLastWarning &&
+          unconfirmedUsers.length > 0 &&
+          !this.mgr.getLastWarning(chatID):
+          if (unconfirmedUsers.length === 1) {
+            reminderText = `O ${unconfirmedUsers[0]} ainda não respondeu, seu PUTO!`;
+          } else {
+            reminderText = `Eis aqui, os putanos que ainda não responderam:\n\n${unconfirmedUsers.join(
+              "\n",
+            )}`;
+          }
+          await this.s.sendMessage(chatID, reminderText).catch(console.error);
+          await this.mgr.markLastWarning(chatID);
           break;
         case shouldFirstWarning && !this.mgr.getFirstWarning(chatID):
           await this.s
@@ -124,7 +171,7 @@ export class Scheduler {
         case shouldSecondWarning && !this.mgr.getSecondWarning(chatID):
           reminderText =
             confirmedUsers.join(", ") +
-            `\n\nAgora é sério heim, vai começar em ${timeLeft.humanize()}!`;
+            `\n\nAgora é sério, vai começar em ${timeLeft.humanize()}... seus PUTOS!`;
           await this.s.sendMessage(chatID, reminderText).catch(console.error);
           await this.mgr.markSecondWarning(chatID);
           break;
@@ -214,9 +261,9 @@ export class Scheduler {
         )
         .catch(async (e) => {
           console.error(e);
-          const errMsg = `Usuário ${this.mgr.getUsername(
-            user,
-          )} precisa dar start no @multikiewbot`;
+          const errMsg =
+            `Usuário ${this.mgr.getUsername(user)} precisa dar start no @` +
+            process.env.BOT_NAME;
           await this.s.sendMessage(chatID, errMsg).catch(console.error);
         });
     }
@@ -466,11 +513,18 @@ export class Scheduler {
   }
 
   getFriday() {
-    return moment().tz(DEFAULT_TIMEZONE).day(FRIDAY).set(DEFAULT_TIME);
+    const now = moment().tz(DEFAULT_TIMEZONE);
+    const friday = moment().tz(DEFAULT_TIMEZONE).day(FRIDAY).set(DEFAULT_TIME);
+    return friday.isBefore(now) ? friday.add(1, "week") : friday;
   }
 
   getSaturday() {
-    return moment().tz(DEFAULT_TIMEZONE).day(SATURDAY).set(DEFAULT_TIME);
+    const now = moment().tz(DEFAULT_TIMEZONE);
+    const saturday = moment()
+      .tz(DEFAULT_TIMEZONE)
+      .day(SATURDAY)
+      .set(DEFAULT_TIME);
+    return saturday.isBefore(now) ? saturday.add(1, "week") : saturday;
   }
 
   formatDate(date) {
