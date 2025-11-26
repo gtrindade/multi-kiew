@@ -137,7 +137,9 @@ export class DataManager {
     if (username && !confirmedUsers.includes(`@` + username)) {
       confirmedUsers.push(`@` + username);
     }
-    const currentEvent = structuredClone(this.events[`${chatID}`] || {});
+    const currentEvent = JSON.parse(
+      JSON.stringify(this.events[`${chatID}`] || {}),
+    );
     currentEvent.warnings = currentEvent.warnings || {};
     if (currentEvent.createdAt) {
       currentEvent.updatedAt = moment().toISOString();
@@ -156,7 +158,7 @@ export class DataManager {
   }
 
   async markWarning(chatID, warning, value = true) {
-    if (!this.events[`${chatID}`]) {
+    if (!this.events[`${chatID}`] || !this.events[`${chatID}`].warnings) {
       return;
     }
     this.events[`${chatID}`].warnings[warning] = value;
@@ -177,7 +179,7 @@ export class DataManager {
     if (!this.events[`${chatID}`]) {
       return false;
     }
-    return this.events[`${chatID}`].warnings[warning];
+    return (this.events[`${chatID}`].warnings || {})[warning];
   }
   getFirstWarning(chatID) {
     return this.getWarning(chatID, firstWarning);
@@ -208,6 +210,7 @@ export class DataManager {
       const event = { ...this.events[e] };
       event.chatID = parseInt(e);
       event.date = moment(event.date);
+      event.msg = event.summary.split("\n")[0];
       events.push(event);
     }
     return events;

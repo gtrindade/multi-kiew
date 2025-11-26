@@ -14,6 +14,13 @@ const INPUT_FORMAT = "DD/MM/YYYY HH:mm";
 const PRINT_FORMAT = "dddd, DD/MM/YYYY HH:mm";
 const DEFAULT_TIME = { hour: 21, minute: 0 };
 
+const LINKS = `Foundry
+http://multikiew.ddns.net:30000/
+
+Zoom (passcode: 461008)
+https://fanatics.zoom.us/j/8297148549?pwd=RllkRGQyaGtPcHBadlVHOGpCY29oQT09
+`;
+
 const FRIDAY = 5;
 const SATURDAY = 6;
 
@@ -94,7 +101,7 @@ export class Scheduler {
         event;
       const allUsers = this.mgr.getUsers(chatID);
       const unconfirmedUsers = allUsers.filter(
-        (x) => !confirmedUsers.includes(x),
+        (x) => !(confirmedUsers || []).includes(x),
       );
       date.tz(DEFAULT_TIMEZONE);
       const isBefore = date.isBefore(now);
@@ -143,7 +150,8 @@ export class Scheduler {
         case isBefore:
           reminderText =
             confirmedUsers.join(", ") +
-            `\n\n${confirmedUsers.length > 1 ? "Já entraram?" : "Já entrou?"}`;
+            `\n\n${confirmedUsers.length > 1 ? "Já entraram?" : "Já entrou?"}` +
+            `\n\n${LINKS}`;
           await this.s.sendMessage(chatID, reminderText).catch(console.error);
           break;
         case shouldLastWarning &&
