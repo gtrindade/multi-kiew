@@ -380,9 +380,6 @@ export class Scheduler {
         }
       }
     }
-    if (response === CHICK) {
-      username = null;
-    }
     await this.mgr.setEvent(
       chatID,
       date,
