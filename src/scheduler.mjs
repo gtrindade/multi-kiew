@@ -99,6 +99,11 @@ export class Scheduler {
     for (let event of events) {
       const { chatID, date, confirmed, confirmedUsers, createdAt, summary } =
         event;
+
+      if (!date || !date.isValid()) {
+        continue;
+      }
+
       const allUsers = this.mgr.getUsers(chatID);
       const unconfirmedUsers = allUsers.filter(
         (x) => !(confirmedUsers || []).includes(x),
@@ -115,6 +120,10 @@ export class Scheduler {
         const warningKey = `daily_${user}`;
         const lastWarning = this.mgr.getWarning(chatID, warningKey);
         const now = moment().tz(DEFAULT_TIMEZONE);
+
+        if (!createdAt) {
+          break;
+        }
 
         const createdDate = moment(createdAt).tz(DEFAULT_TIMEZONE);
         if (createdDate.format("YYYY-MM-DD") === now.format("YYYY-MM-DD")) {

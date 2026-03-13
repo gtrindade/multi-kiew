@@ -1,6 +1,4 @@
 import Slimbot from "slimbot";
-import { GoogleGenAI } from "@google/genai";
-import { AI, LLM } from "./ai-api.mjs";
 import Roll from "roll";
 import xhr2 from "xhr2";
 import { Shadowrun } from "./shadowrun.mjs";
@@ -9,7 +7,7 @@ import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
 import { DataManager } from "./data.mjs";
 import { removeCommand } from "./util.mjs";
-import { LocalLLM, LAI } from "./ai-local.mjs";
+import { LocalLLM, AI } from "./ai.mjs";
 import { Ollama } from "ollama";
 
 global.XMLHttpRequest = xhr2;
@@ -17,7 +15,6 @@ global.XMLHttpRequest = xhr2;
 const ollama = new Ollama({ url: "http://localhost:11434" });
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
 const roll = new Roll();
-const googleGenAI = new GoogleGenAI({ apiKey: process.env["GEMINI_API_KEY"] });
 
 // Commands
 const START = "/start";
@@ -43,12 +40,11 @@ const sr = new Shadowrun(roll, slimbot);
 const dice = new Dice(roll, slimbot);
 const scheduler = new Scheduler(slimbot, mgr);
 const ai = new LocalLLM(ollama, slimbot);
-const gai = new LLM(googleGenAI, slimbot);
 
 slimbot.on(`message`, async (message) => {
   const { text, chat, from } = message;
   console.log(
-    `[${chat.title || chat.id}] ${from.username || from.first_name}: ${text}`
+    `[${chat.title || chat.id}] ${from.username || from.first_name}: ${text}`,
   );
   if (!text) {
     return;
@@ -72,7 +68,7 @@ slimbot.on(`message`, async (message) => {
       if (!username || !id) {
         slimbot.sendMessage(
           chat.id,
-          "Por favor registre um username no telegram\nhttps://telegram.org/faq?setln=uz#q-what-are-usernames-how-do-i-get-one"
+          "Por favor registre um username no telegram\nhttps://telegram.org/faq?setln=uz#q-what-are-usernames-how-do-i-get-one",
         );
         return;
       }
@@ -82,7 +78,7 @@ slimbot.on(`message`, async (message) => {
       await scheduler.createGroup(
         chat.id,
         chat.title,
-        removeCommand(ADD_GROUP, text)
+        removeCommand(ADD_GROUP, text),
       );
       break;
     case text.startsWith(REMOVE_GROUP):
@@ -101,7 +97,7 @@ slimbot.on(`message`, async (message) => {
       await scheduler.createEvent(
         chat.id,
         chat.title,
-        removeCommand(ADD_EVENT, text)
+        removeCommand(ADD_EVENT, text),
       );
       break;
     case text.startsWith(ROLL):
@@ -115,22 +111,18 @@ slimbot.on(`message`, async (message) => {
         .sendMessage(
           chat.id,
           `Blz, lá vai:\n\n` +
-            SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)]
+            SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)],
         )
         .catch(console.error);
       break;
     case text.startsWith(SHADOWRUN):
       sr.roll(message);
       break;
-    case text.startsWith(LAI):
-      ai.prompt(message);
-      break;
     case text.startsWith(AI):
-      gai.prompt(message);
+      ai.prompt(message);
       break;
   }
 });
 
 console.log(`listening...`);
 slimbot.startPolling();
-

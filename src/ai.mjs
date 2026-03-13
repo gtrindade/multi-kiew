@@ -1,10 +1,10 @@
 import { removeCommand } from "./util.mjs";
 
-export const AI = "/ai";
+export const AI = "/AI";
 
 const maxHistory = 12;
 
-export class LLM {
+export class LocalLLM {
   constructor(ollama, slimbot) {
     this.o = ollama;
     this.s = slimbot;
@@ -31,16 +31,16 @@ export class LLM {
   }
 
   async prompt(message) {
-    const { text, chat, from } = message;
+    const { text, chat } = message;
     const msg = removeCommand(AI, text);
-    this.pushMsgForUser(msg, from.id);
+    this.pushMsgForUser(msg, chat.id);
 
     let result;
     try {
       result = await this.o.chat({
-        model: "gemma3:1b",
-        // "model": "deepseek-r1:1.5b"
-        messages: this.m[from.id],
+        // model: "gemma3:1b",
+        model: "deepseek-r1:1.5b",
+        messages: this.m[chat.id],
       });
     } catch (error) {
       console.error(error);
@@ -52,7 +52,12 @@ export class LLM {
       return;
     }
 
-    this.m[from.id] = this.addToList(this.m[from.id], result.message);
+    result.message.content = result.message.content.replace(
+      /<think>[\s\S]*?<\/think>/g,
+      "",
+    );
+
+    this.m[chat.id] = this.addToList(this.m[chat.id], result.message);
 
     await this.s
       .sendMessage(chat.id, result.message.content, {
