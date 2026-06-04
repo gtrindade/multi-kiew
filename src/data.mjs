@@ -158,8 +158,11 @@ export class DataManager {
   }
 
   async markWarning(chatID, warning, value = true) {
-    if (!this.events[`${chatID}`] || !this.events[`${chatID}`].warnings) {
+    if (!this.events[`${chatID}`]) {
       return;
+    }
+    if (!this.events[`${chatID}`].warnings) {
+      this.events[`${chatID}`].warnings = {};
     }
     this.events[`${chatID}`].warnings[warning] = value;
     await this.saveEvents();

@@ -91,6 +91,9 @@ export class Scheduler {
   }
 
   async reminderLoop() {
+    if (process.env.ENABLE_ALERTS !== "true") {
+      return;
+    }
     const now = moment().tz(DEFAULT_TIMEZONE);
     const events = this.mgr.listEvents();
     if (!events || !events.length) {
@@ -99,13 +102,21 @@ export class Scheduler {
     for (let event of events) {
       const { chatID, date, confirmed, confirmedUsers, createdAt, summary } =
         event;
-      const allUsers = this.mgr.getUsers(chatID);
+      const allUsers = this.mgr.getUsers(chatID) || [];
       const unconfirmedUsers = allUsers.filter(
         (x) => !(confirmedUsers || []).includes(x),
       );
       date.tz(DEFAULT_TIMEZONE);
       const isBefore = date.isBefore(now);
       const timeLeft = moment.duration(date.diff(now));
+
+      const isLegacy = !createdAt || !event.warnings;
+      if (isLegacy) {
+        if (isBefore) {
+          await this.removeEvent(chatID, true);
+        }
+        continue;
+      }
 
       if (isBefore) {
         await this.removeEvent(chatID, true);
