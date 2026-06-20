@@ -16,6 +16,54 @@ global.XMLHttpRequest = xhr2;
 
 const ollama = new Ollama({ url: "http://localhost:11434" });
 const slimbot = new Slimbot(process.env[`TELEGRAM_BOT_TOKEN`]);
+
+// Throttling mechanism for sendMessage to prevent spam loops and race conditions
+const messageHistory = {};
+const originalSendMessage = slimbot.sendMessage.bind(slimbot);
+slimbot.sendMessage = async function (chatID, text, optionalParams) {
+  const textStr = text ? String(text) : "";
+  const key = `${chatID}:${textStr}`;
+  const now = Date.now();
+
+  if (!messageHistory[key]) {
+    messageHistory[key] = {
+      lastSentTime: 0,
+      sentTimestamps: [],
+      cooldownUntil: 0
+    };
+  }
+
+  const history = messageHistory[key];
+
+  // 1. Check if currently in a 1-hour cooldown
+  if (now < history.cooldownUntil) {
+    const minutesLeft = ((history.cooldownUntil - now) / 60000).toFixed(1);
+    console.warn(`[Throttle Warning] Message blocked due to 1-hour cooldown. Chat: ${chatID}, Message: "${textStr.substring(0, 50)}...", Cooldown remaining: ${minutesLeft}m`);
+    return { result: { message_id: -1, text: "throttled" } };
+  }
+
+  // 2. Check 6-second interval duplicate check
+  if (now - history.lastSentTime < 6000) {
+    console.warn(`[Throttle Warning] Duplicate message blocked within 6-second window. Chat: ${chatID}, Message: "${textStr.substring(0, 50)}..."`);
+    return { result: { message_id: -1, text: "throttled" } };
+  }
+
+  // 3. Filter timestamps to the last 5 minutes (300,000 ms)
+  history.sentTimestamps = history.sentTimestamps.filter(t => now - t < 300000);
+
+  // 4. Check if sent 10 times within the last 5 minutes
+  if (history.sentTimestamps.length >= 10) {
+    history.cooldownUntil = now + 3600000; // 1 hour cooldown (3,600,000 ms)
+    console.warn(`[Throttle Warning] Message sent 10 times in 5 minutes. Triggered 1-hour cooldown. Chat: ${chatID}, Message: "${textStr.substring(0, 50)}..."`);
+    return { result: { message_id: -1, text: "throttled" } };
+  }
+
+  // 5. Send message and record timestamps
+  const result = await originalSendMessage(chatID, text, optionalParams);
+  history.lastSentTime = Date.now();
+  history.sentTimestamps.push(Date.now());
+  return result;
+};
 const roll = new Roll();
 const googleGenAI = new GoogleGenAI({ apiKey: process.env["GEMINI_API_KEY"] });
 
