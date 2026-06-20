@@ -162,7 +162,7 @@ if (slimbot.sentMessages.length > 0) {
 }
 
 // check if past legacy event was removed
-if (removedEventChatID === "789") {
+if (String(removedEventChatID) === "789") {
   console.log("✅ SUCCESS: Past legacy event was silently removed!");
 } else {
   console.error("❌ FAILURE: Past legacy event was not removed!");
