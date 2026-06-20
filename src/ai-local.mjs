@@ -39,7 +39,8 @@ export class LocalLLM {
     try {
       result = await this.o.chat({
         // model: "gemma3:1b",
-        model: "deepseek-r1:1.5b",
+        // model: "deepseek-r1:1.5b",
+	model: "llama3.2",
         messages: this.m[chat.id],
       });
     } catch (error) {
