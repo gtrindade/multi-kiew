@@ -9,7 +9,7 @@ import { SUBJECTS } from "./controversy.mjs";
 import { Scheduler } from "./scheduler.mjs";
 import { DataManager } from "./data.mjs";
 import { removeCommand } from "./util.mjs";
-import { LocalLLM, LAI } from "./ai-local.mjs";
+import { LocalLLM } from "./ai-local.mjs";
 import { Ollama } from "ollama";
 
 global.XMLHttpRequest = xhr2;
@@ -170,11 +170,8 @@ slimbot.on(`message`, async (message) => {
     case text.startsWith(SHADOWRUN):
       sr.roll(message);
       break;
-    case text.startsWith(LAI):
-      ai.prompt(message);
-      break;
     case text.startsWith(AI):
-      gai.prompt(message);
+      ai.prompt(message);
       break;
   }
 });

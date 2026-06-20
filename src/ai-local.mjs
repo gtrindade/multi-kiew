@@ -1,6 +1,5 @@
 import { removeCommand } from "./util.mjs";
-
-export const LAI = "/lai";
+import { AI } from "./ai-api.mjs";
 
 const maxHistory = 12;
 
@@ -32,7 +31,7 @@ export class LocalLLM {
 
   async prompt(message) {
     const { text, chat } = message;
-    const msg = removeCommand(LAI, text);
+    const msg = removeCommand(AI, text);
     this.pushMsgForUser(msg, chat.id);
 
     let result;
